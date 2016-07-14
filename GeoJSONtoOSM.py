@@ -16,8 +16,9 @@ def validate_input(json_file, schema_file):
         return False
     except jsonschema.ValidationError:
         click.echo("Input JSON fail to match schema")
+        return False
     except:
-        print("Unexpected error:", sys.exc_info()[0])
+        click.echo("Unexpected error:", sys.exc_info()[0])
         return False
 
     return True
@@ -39,7 +40,7 @@ def to_OSM(gpd_database, output_path):
 
 @click.command()
 @click.option('--validate/--no-validate', default=True,
-              help='Validate the input GeoJSON file before conversion')
+              help='Turn on/off validation the input GeoJSON file before conversion')
 @click.argument('file_in', type=click.Path(exists=True, readable=True, allow_dash=True))
 @click.argument('file_out', type=click.Path(exists=False, writable=True, allow_dash=True))
 @click.argument('validate_schema', default='Schema/GeoJSONSchema.json',

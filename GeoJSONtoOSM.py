@@ -1,15 +1,46 @@
-import geopandas as gpd
-import fiona
 import click
 import json
 import jsonschema
 import sys
+from OSMIDGenerator import OSMIDGenerator
 
+# import lxml etree
+try:
+    from lxml import etree
 
-def validate_input(json_file, schema_file):
+    print("running with lxml.etree")
+except ImportError:
     try:
-        json_in = json.load(json_file)
-        schema_in = json.load(schema_file)
+        # Python 2.5
+        import xml.etree.cElementTree as etree
+
+        print("running with cElementTree on Python 2.5+")
+    except ImportError:
+        try:
+            # Python 2.5
+            import xml.etree.ElementTree as etree
+
+            print("running with ElementTree on Python 2.5+")
+        except ImportError:
+            try:
+                # normal cElementTree install
+                import cElementTree as etree
+
+                print("running with cElementTree")
+            except ImportError:
+                try:
+                    # normal ElementTree install
+                    import elementtree.ElementTree as etree
+
+                    print("running with ElementTree")
+                except ImportError:
+                    print("Failed to import ElementTree from any known place")
+
+
+def validate_input(json_database, schema_database):
+    try:
+        json_in = json.load(json_database)
+        schema_in = json.load(schema_database)
         jsonschema.validate(json_in, schema_in)
     except json.decoder.JSONDecodeError:
         click.echo("Input JSON fail to be decoded")
@@ -24,18 +55,21 @@ def validate_input(json_file, schema_file):
     return True
 
 
-def read_input(json_path):
+def build_dom(json_database):
     try:
-        file_read = gpd.read_file(json_path, mode='r', driver='GeoJSON')
-    except fiona.errors.FionaValueError:
-        click.echo('Failed to read as GeoJSON')
-        return -1
-    return file_read
+        json_in = json.load(json_database)
+    except json.decoder.JSONDecodeError:
+        click.echo("Input JSON fail to be decoded")
+        return False
+    dom_root = etree.Element('osm')
+    id_generator = OSMIDGenerator()
+    # TODO: Turns json input to DOM tree
+    return False
 
 
 def to_OSM(gpd_database, output_path):
     # TODO: Output file to OSM format
-    return True
+    return False
 
 
 @click.command()
@@ -43,15 +77,15 @@ def to_OSM(gpd_database, output_path):
               help='Turn on/off validation the input GeoJSON file before conversion')
 @click.argument('file_in', type=click.Path(exists=True, readable=True, allow_dash=True))
 @click.argument('file_out', type=click.Path(exists=False, writable=True, allow_dash=True))
-@click.argument('validate_schema', default='Schema/GeoJSONSchema.json',
+@click.argument('json_schema', default='Schemas/SampleJSONSchema.json',
                 type=click.Path(exists=True, readable=True, allow_dash=True))
-def converter(file_in, file_out, validate, validate_schema):
+def converter(file_in, file_out, validate, json_schema):
     click.echo('File in: ' + file_in)
     click.echo('File out: ' + file_out)
     click.echo('...')
 
     if validate:
-        if validate_input(open(file_in), open(validate_schema)):
+        if validate_input(open(file_in), open(json_schema)):
             click.echo('Checked: Valid GeoJSON Input File')
             click.echo('...')
         else:
@@ -59,8 +93,8 @@ def converter(file_in, file_out, validate, validate_schema):
             click.echo('Operation Terminated')
             return
 
-    database = read_input(file_in)
-    if database == -1:
+    xml_dom = build_dom(open(file_in))
+    if not xml_dom:
         click.echo('Failed to Read Input File')
         click.echo('Operation Terminated')
         return
@@ -68,7 +102,7 @@ def converter(file_in, file_out, validate, validate_schema):
         click.echo('Input File Read Successfully')
         click.echo('...')
 
-    if to_OSM(database, file_out):
+    if to_OSM(xml_dom, file_out):
         click.echo('OSM file saved')
         click.echo('...')
     else:

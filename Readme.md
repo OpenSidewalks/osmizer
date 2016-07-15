@@ -1,4 +1,4 @@
-# Data Import Tool for Global Open Sidewalks
+# Data Import Tool for Global OpenSidewalks
 
 1. [What is Data Import Tool](#what-is-data-import-tool)
 1. [Features](#features)
@@ -8,7 +8,7 @@
 ## What is Data Import Tool
 
 ## Features
-- Turns any Open Side Walks standard schema into OSM standard format
+- Turns any Global OpenSidewalks standard schema into OSM standard format
 - Validate input JSON format before conversion
 
 ## Usage

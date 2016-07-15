@@ -64,11 +64,34 @@ def build_dom(json_database):
     dom_root = etree.Element('osm')
     id_generator = OSMIDGenerator()
     # TODO: Turns json input to DOM tree
-    return False
+    for elt in json_in['features']:
+        if elt['geometry']['type'] == 'LineString':
+            osm_way = etree.SubElement(dom_root, 'way')
+            osm_way.attrib['id'] = str(id_generator.get_next())
+            osm_way.attrib['user'] = 'TestUSER'
+            osm_way.attrib['uid'] = '1'
+            osm_way.attrib['visible'] = 'true'
+            for coordinate in elt['geometry']['coordinates']:
+                osm_node = etree.SubElement(dom_root, 'node')
+                osm_node.attrib['id'] = str(id_generator.get_next())
+                osm_node.attrib['lon'] = str(coordinate[0])
+                osm_node.attrib['lat'] = str(coordinate[1])
+                osm_nd = etree.SubElement(osm_way, 'nd')
+                osm_nd.attrib['ref'] = osm_node.attrib['id']
+            if elt['properties'] is not None:
+                for prop_key in elt['properties']:
+                    osm_tag = etree.SubElement(osm_way, 'tag')
+                    osm_tag.attrib['k'] = prop_key
+                    osm_tag.attrib['v'] = str(elt['properties'][prop_key])
+
+    click.echo(etree.tostring(dom_root, pretty_print=True))
+    return dom_root
 
 
-def to_OSM(gpd_database, output_path):
+def to_OSM(xml_dom, output_path):
     # TODO: Output file to OSM format
+    et = etree.ElementTree(xml_dom)
+    et.write(output_path, pretty_print=True)
     return False
 
 
@@ -94,7 +117,7 @@ def converter(file_in, file_out, validate, json_schema):
             return
 
     xml_dom = build_dom(open(file_in))
-    if not xml_dom:
+    if xml_dom is False:
         click.echo('Failed to Read Input File')
         click.echo('Operation Terminated')
         return

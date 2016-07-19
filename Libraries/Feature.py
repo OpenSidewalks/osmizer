@@ -39,6 +39,7 @@ except ImportError:
 
 class Feature:
     def __init__(self, json_database=None, schema=None):
+        # TODO: Put loading json data base outside init
         self.json_database = json.load(json_database)
         self.schema = json.load(schema)
 
@@ -55,13 +56,15 @@ class Feature:
         try:
             jsonschema.validate(json_copy, self.schema)
         except json.decoder.JSONDecodeError:
-            click.echo("Input JSON fail to be decoded")
+            click.echo('Input JSON fail to be decoded')
             return False
-        except jsonschema.ValidationError:
-            click.echo("Input JSON fail to match schema")
+        except jsonschema.ValidationError as err:
+            click.echo('Input JSON fail to match schema')
+            click.echo('Error:\n')
+            click.echo(err)
             return False
         except:
-            click.echo("Unexpected error:", sys.exc_info()[0])
+            click.echo('Unexpected error:', sys.exc_info()[0])
             return False
 
         return True

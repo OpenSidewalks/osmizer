@@ -1,9 +1,3 @@
-import copy
-import json
-import sys
-
-import click
-import jsonschema
 from Libraries import Feature
 from Libraries.OSMIDGenerator import OSMIDGenerator
 from lxml import etree
@@ -11,30 +5,8 @@ from lxml import etree
 
 class Sidewalk(Feature.Feature):
     def __init__(self, sidewalks_json):
-        super().__init__()
-        self.json_database = json.load(sidewalks_json)
-        self.schema = json.load(open("Schemas/Sidewalk_Schema.json"))
-
-    def validate(self):
-        """
-        Validate JSON input according to the schema
-
-        :return: a boolean indicates if the input JSON match the schema
-        """
-        json_copy = copy.deepcopy(self.json_database)
-        try:
-            jsonschema.validate(json_copy, self.schema)
-        except json.decoder.JSONDecodeError:
-            click.echo("Input JSON fail to be decoded")
-            return False
-        except jsonschema.ValidationError:
-            click.echo("Input JSON fail to match schema")
-            return False
-        except:
-            click.echo("Unexpected error:", sys.exc_info()[0])
-            return False
-
-        return True
+        schema_path = 'Schemas/Sidewalk_Schema.json'
+        super().__init__(sidewalks_json, open(schema_path))
 
     def convert(self):
         """
@@ -66,6 +38,3 @@ class Sidewalk(Feature.Feature):
                         osm_tag.attrib['v'] = str(elt['properties'][prop_key])
 
         return dom_root
-
-    def merge(self, dom1, dom2):
-        pass

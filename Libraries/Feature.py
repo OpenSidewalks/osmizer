@@ -1,3 +1,9 @@
+import copy
+import jsonschema
+import json
+import click
+import sys
+
 # import lxml etree
 try:
     from lxml import etree
@@ -32,14 +38,36 @@ except ImportError:
 
 
 class Feature:
-    def __init__(self):
-        pass
+    def __init__(self, json_database=None, schema=None):
+        self.json_database = json.load(json_database)
+        self.schema = json.load(schema)
 
     def validate(self):
-        pass
+        """
+        Validate JSON input according to the schema
+
+        :return: a boolean indicates if the input JSON match the schema
+        """
+        if self.json_database is None or self.schema is None:
+            raise ValueError('JSON input or schema not found')
+
+        json_copy = copy.deepcopy(self.json_database)
+        try:
+            jsonschema.validate(json_copy, self.schema)
+        except json.decoder.JSONDecodeError:
+            click.echo("Input JSON fail to be decoded")
+            return False
+        except jsonschema.ValidationError:
+            click.echo("Input JSON fail to match schema")
+            return False
+        except:
+            click.echo("Unexpected error:", sys.exc_info()[0])
+            return False
+
+        return True
 
     def convert(self):
-        pass
+        raise NotImplementedError('Implement convert before use')
 
     def dedup(self, xml_dom, tolerance):
         """
@@ -138,7 +166,8 @@ class Feature:
             self.__recursive_substitute_nd_id__(child, representative_id, substitute_id)
 
     def merge(self, dom1, dom2):
-        pass
+        # TODO: Implement merge
+        raise NotImplementedError()
 
     def to_xml(self, xml_dom, output_path):
         """

@@ -1,0 +1,51 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            144.8,
+            67.7
+          ],
+          [
+            105.9,
+            44.8
+          ],
+          [
+            106.0,
+            55.6
+          ]
+        ]
+      },
+      "properties": {
+        "marked": "zebra",
+        "signal": true,
+        "bicycle": false
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            5.0,
+            79.7
+          ],
+          [
+            167.0,
+            87.7
+          ]
+        ]
+      },
+      "properties": {
+        "marked": "giraffe",
+        "signal": false,
+        "bicycle": true
+      }
+    }
+  ]
+}

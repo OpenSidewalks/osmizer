@@ -1,0 +1,35 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.0,
+          7.7
+        ]
+      },
+      "properties": {
+        "height": 1.0,
+        "tactile_paving": true,
+        "lowered": false
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          167.0,
+          87.7
+        ]
+      },
+      "properties": {
+        "height": 0.5,
+        "tactile_paving": false,
+        "lowered": true
+      }
+    }
+  ]
+}

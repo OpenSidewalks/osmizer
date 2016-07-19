@@ -11,10 +11,25 @@
 ## Features
 - Validate input JSON format before conversion
 - Turns any Global OpenSidewalks standard schema into OSM standard format
+- Merge multiple layers into one
+- Deduplicate (default and can be disabled)
 
 ## Usage
+- To Convert
 ```
-GeoJSONtoOSM.py [OPTIONS] FILE_IN FILE_OUT [VALIDATE_SCHEMA]
+GeoJSONtoOSM.py convert sidewalks <input.json> <output.json>
+GeoJSONtoOSM.py convert curbramps <input.json> <output.json>
+GeoJSONtoOSM.py convert crossings <input.json> <output.json>
+```
+- To Validate
+```
+GeoJSONtoOSM.py validate sidewalks <input.json> <output.json>
+GeoJSONtoOSM.py validate curbramps <input.json> <output.json>
+GeoJSONtoOSM.py validate crossings <input.json> <output.json>
+```
+- To Merge
+```
+GeoJSONtoOSM.py merge <output1.json> <output2.json> <output_final.json>
 ```
 
 ## Options

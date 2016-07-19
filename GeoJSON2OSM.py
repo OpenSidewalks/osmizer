@@ -2,6 +2,7 @@ import click
 from Libraries import Sidewalk
 
 
+# TODO: Implement Group Command
 @click.command()
 @click.option('--validate_only', default=False, help='only perform schema validation without conversion')
 @click.option('--validate/--no-validate', default=True,

@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/OpenSidewalks/DSSG2016-Sidewalks-ImportTool.svg?branch=Developing)](https://travis-ci.org/OpenSidewalks/DSSG2016-Sidewalks-ImportTool)
+[![Build Status](https://travis-ci.org/OpenSidewalks/DSSG2016-Sidewalks-ImportTool.svg?branch=master)](https://travis-ci.org/OpenSidewalks/DSSG2016-Sidewalks-ImportTool)
 
 # Data Import Tool for Global OpenSidewalks
 

@@ -1,7 +1,8 @@
+from json import load as load_json
+
 from Libraries import Feature
 from Libraries.OSMIDGenerator import OSMIDGenerator
 from lxml import etree
-from json import load as load_json
 
 
 class Crossing(Feature.Feature):
@@ -10,8 +11,9 @@ class Crossing(Feature.Feature):
         Load input crossings from json object and schema
         :param crossings_json:
         """
-        super().__init__(crossings_json)
-        # TODO add schema information for crossing
+        schema_path = 'Schemas/Crossing_Schema.json'
+        schema_json = load_json(open(schema_path))
+        super().__init__(crossings_json, schema_json)
 
     def convert(self):
         """

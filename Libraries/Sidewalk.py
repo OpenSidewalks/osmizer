@@ -1,7 +1,8 @@
+from json import load as load_json
+
 from Libraries import Feature
 from Libraries.OSMIDGenerator import OSMIDGenerator
 from lxml import etree
-from json import load as load_json
 
 
 class Sidewalk(Feature.Feature):

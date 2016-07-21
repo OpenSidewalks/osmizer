@@ -1,11 +1,15 @@
+from json import load as load_json
+
 from Libraries import Feature
 from Libraries.OSMIDGenerator import OSMIDGenerator
 from lxml import etree
-from json import load as load_json
+
 
 class CurbRamp(Feature.Feature):
     def __init__(self, curbramps_json):
-        super().__init__(curbramps_json)
+        schema_path = 'Schemas/CurbRamp_Schema.json'
+        schema_json = load_json(open(schema_path))
+        super().__init__(curbramps_json, schema_json)
 
     def convert(self):
         """
@@ -14,7 +18,6 @@ class CurbRamp(Feature.Feature):
         :return: a DOM tree structure which is equivalent to the curb ramps json database
 
          """
-        # TODO: Implement convert
         dom_root = etree.Element('osm')
         self.add_header(dom_root)
         id_generator = OSMIDGenerator()
@@ -35,4 +38,3 @@ class CurbRamp(Feature.Feature):
                         osm_tag.attrib['k'] = property
                         osm_tag.attrib['v'] = str(elt['properties'][property])
         return dom_root
-

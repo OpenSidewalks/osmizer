@@ -1,7 +1,8 @@
 import copy
-import jsonschema
-import click
 import sys
+
+import click
+import jsonschema
 
 # import lxml etree
 try:
@@ -88,7 +89,7 @@ class Feature:
         # Sort out all nodes
         nodes = []
         for child in list(xml_dom):
-            if child.tag == 'node':
+            if child.tag == 'node' and ('lon' and 'lat') in child.attrib:
                 nodes.append(child)
 
         # Group nodes when they are close

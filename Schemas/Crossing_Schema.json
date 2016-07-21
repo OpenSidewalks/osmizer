@@ -1,0 +1,70 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "required": true,
+  "properties": {
+    "features": {
+      "type": "array",
+      "minitems": 1,
+      "required": true,
+      "items": {
+        "type": "object",
+        "required": false,
+        "properties": {
+          "geometry": {
+            "type": "object",
+            "required": true,
+            "properties": {
+              "coordinates": {
+                "type": "array",
+                "required": true,
+                "items": {
+                  "type": "array",
+                  "minItems": "2",
+                  "maxItems": "2",
+                  "required": true
+                }
+              },
+              "type": {
+                "enum": [
+                  "LineString"
+                ],
+                "required": true
+              }
+            }
+          },
+          "properties": {
+            "type": "object",
+            "required": false,
+            "properties": {
+              "bicycle": {
+                "type": "boolean",
+                "required": false
+              },
+              "marked": {
+                "type": "string",
+                "required": false
+              },
+              "signal": {
+                "type": "boolean",
+                "required": false
+              }
+            }
+          },
+          "type": {
+            "enum": [
+              "Feature"
+            ],
+            "required": true
+          }
+        }
+      }
+    },
+    "type": {
+      "enum": [
+        "FeatureCollection"
+      ],
+      "required": true
+    }
+  }
+}

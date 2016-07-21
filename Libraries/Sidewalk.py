@@ -22,15 +22,13 @@ class Sidewalk(Feature.Feature):
         :return: a DOM tree structure which is equivalent to the sidewalks json database
         """
         dom_root = etree.Element('osm')
+        self.add_header(dom_root)
         id_generator = OSMIDGenerator()
 
         for elt in self.json_database['features']:
             if elt['geometry']['type'] == 'LineString':
                 osm_way = etree.SubElement(dom_root, 'way')
                 osm_way.attrib['id'] = str(id_generator.get_next())
-                osm_way.attrib['user'] = 'TestUSER'
-                osm_way.attrib['uid'] = '1'
-                osm_way.attrib['visible'] = 'true'
                 for coordinate in elt['geometry']['coordinates']:
                     osm_node = etree.SubElement(dom_root, 'node')
                     osm_node.attrib['id'] = str(id_generator.get_next())

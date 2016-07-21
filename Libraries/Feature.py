@@ -73,6 +73,10 @@ class Feature:
     def convert(self):
         raise NotImplementedError('Implement convert before use')
 
+    def add_header(self, osm_xml_dom_root):
+        osm_xml_dom_root.attrib['version'] = str(0.6)
+        osm_xml_dom_root.attrib['generator'] = 'OpenSidewalks Data Import Tool'
+
     def dedup(self, xml_dom, tolerance):
         """
         Merge nodes which are duplicate in a DOM tree
@@ -182,5 +186,5 @@ class Feature:
         :return: a boolean indicates if the export progress is successful
         """
         et = etree.ElementTree(xml_dom)
-        et.write(output_path, pretty_print=True)
+        et.write(output_path, pretty_print=True, xml_declaration=True, encoding="utf-8")
         return True

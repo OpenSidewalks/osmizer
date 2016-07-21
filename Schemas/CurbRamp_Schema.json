@@ -5,11 +5,11 @@
   "properties": {
     "features": {
       "type": "array",
-      "minitems": "1",
+      "minItems": 1,
       "required": true,
       "items": {
         "type": "object",
-        "required": false,
+        "required": true,
         "properties": {
           "geometry": {
             "type": "object",
@@ -22,7 +22,7 @@
                 "required": true,
                 "items": {
                   "type": "number",
-                  "required": false
+                  "required": true
                 }
               },
               "type": {

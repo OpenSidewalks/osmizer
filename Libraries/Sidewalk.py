@@ -42,5 +42,4 @@ class Sidewalk(Feature.Feature):
                         osm_tag = etree.SubElement(osm_way, 'tag')
                         osm_tag.attrib['k'] = prop_key
                         osm_tag.attrib['v'] = str(elt['properties'][prop_key])
-
         return dom_root

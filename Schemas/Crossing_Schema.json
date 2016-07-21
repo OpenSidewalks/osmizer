@@ -1,28 +1,32 @@
 {
   "type": "object",
   "$schema": "http://json-schema.org/draft-03/schema",
-  "required": true,
+  "required": false,
   "properties": {
     "features": {
       "type": "array",
-      "minitems": 1,
-      "required": true,
+      "minItems": 1,
+      "required": false,
       "items": {
         "type": "object",
         "required": false,
         "properties": {
           "geometry": {
             "type": "object",
-            "required": true,
+            "required": false,
             "properties": {
               "coordinates": {
                 "type": "array",
-                "required": true,
+                "minItems": 2,
+                "required": false,
                 "items": {
                   "type": "array",
-                  "minItems": "2",
-                  "maxItems": "2",
-                  "required": true
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "items": {
+                    "type": "number"
+                  },
+                  "required": false
                 }
               },
               "type": {
@@ -55,7 +59,7 @@
             "enum": [
               "Feature"
             ],
-            "required": true
+            "required": false
           }
         }
       }
@@ -64,7 +68,7 @@
       "enum": [
         "FeatureCollection"
       ],
-      "required": true
+      "required": false
     }
   }
 }

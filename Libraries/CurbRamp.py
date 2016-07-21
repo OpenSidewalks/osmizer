@@ -7,6 +7,11 @@ from lxml import etree
 
 class CurbRamp(Feature.Feature):
     def __init__(self, curbramps_json):
+        """
+        Load input curb ramps from json object and schema
+
+        :param curbramps_json: the curb ramps json object
+        """
         schema_path = 'Schemas/CurbRamp_Schema.json'
         schema_json = load_json(open(schema_path))
         super().__init__(curbramps_json, schema_json)
@@ -16,8 +21,7 @@ class CurbRamp(Feature.Feature):
         Convert curb ramps GeoJSON data to DOM tree, features may be duplicated due to the structure of JSON
 
         :return: a DOM tree structure which is equivalent to the curb ramps json database
-
-         """
+        """
         dom_root = etree.Element('osm')
         self.add_header(dom_root)
         id_generator = OSMIDGenerator()
@@ -33,8 +37,8 @@ class CurbRamp(Feature.Feature):
                 osm_nd = etree.SubElement(osm_curbramp, 'nd')
                 osm_nd.attrib['ref'] = osm_node.attrib['id']
                 if elt['properties'] is not None:
-                    for property in elt['properties']:
+                    for prop in elt['properties']:
                         osm_tag = etree.SubElement(osm_curbramp, 'tag')
-                        osm_tag.attrib['k'] = property
-                        osm_tag.attrib['v'] = str(elt['properties'][property])
+                        osm_tag.attrib['k'] = prop
+                        osm_tag.attrib['v'] = str(elt['properties'][prop])
         return dom_root

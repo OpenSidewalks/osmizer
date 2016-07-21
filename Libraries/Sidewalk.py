@@ -1,12 +1,19 @@
 from Libraries import Feature
 from Libraries.OSMIDGenerator import OSMIDGenerator
 from lxml import etree
+from json import load as load_json
 
 
 class Sidewalk(Feature.Feature):
     def __init__(self, sidewalks_json):
+        """
+        Load input sidewalks json object and schema
+
+        :param sidewalks_json: the sidewalks json object
+        """
         schema_path = 'Schemas/Sidewalk_Schema.json'
-        super().__init__(sidewalks_json, open(schema_path))
+        schema_json = load_json(open(schema_path))
+        super().__init__(sidewalks_json, schema_json)
 
     def convert(self):
         """

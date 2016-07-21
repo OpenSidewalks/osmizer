@@ -1,6 +1,5 @@
 import copy
 import jsonschema
-import json
 import click
 import sys
 
@@ -39,9 +38,14 @@ except ImportError:
 
 class Feature:
     def __init__(self, json_database=None, schema=None):
-        # TODO: Put loading json data base outside init
-        self.json_database = json.load(json_database)
-        self.schema = json.load(schema)
+        """
+        Load input json object and schema object
+
+        :param json_database: the input json object
+        :param schema: the schema json object
+        """
+        self.json_database = json_database
+        self.schema = schema
 
     def validate(self):
         """
@@ -55,9 +59,6 @@ class Feature:
         json_copy = copy.deepcopy(self.json_database)
         try:
             jsonschema.validate(json_copy, self.schema)
-        except json.decoder.JSONDecodeError:
-            click.echo('Input JSON fail to be decoded')
-            return False
         except jsonschema.ValidationError as err:
             click.echo('Input JSON fail to match schema')
             click.echo('Error:\n')

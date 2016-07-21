@@ -2,6 +2,8 @@
 
 # Data Import Tool for Global OpenSidewalks
 
+[![Build Status](https://travis-ci.org/OpenSidewalks/DSSG2016-Sidewalks-ImportTool.svg?branch=Developing)](https://travis-ci.org/OpenSidewalks/DSSG2016-Sidewalks-ImportTool)
+
 1. [What is Data Import Tool](#what-is-data-import-tool)
 1. [Features](#features)
 1. [Usage](#usage)
@@ -13,52 +15,58 @@
 ## Features
 - Validate input JSON format before conversion
 - Turns any Global OpenSidewalks standard schema into OSM standard format
+- Deduplicate (default and can be disabled)
+- Merge multiple layers into one
 
 ## Usage
 ```
-GeoJSONtoOSM.py [OPTIONS] FILE_IN FILE_OUT [VALIDATE_SCHEMA]
+GeoJSON2OSM.py [OPTIONS] COMMAND [ARGS]...
+```
+- Convert
+```
+GeoJSONtoOSM.py convert sidewalks <input.json> <output.json>
+GeoJSONtoOSM.py convert curbramps <input.json> <output.json>
+GeoJSONtoOSM.py convert crossings <input.json> <output.json>
+```
+- Validate
+```
+GeoJSONtoOSM.py validate sidewalks <input.json>
+GeoJSONtoOSM.py validate curbramps <input.json>
+GeoJSONtoOSM.py validate crossings <input.json>
+```
+- Merge
+```
+GeoJSONtoOSM.py merge <output1.json> <output2.json> <output_final.json>
 ```
 
 ## Options
+- Convert
 ```
-  --validate_only TEXT        only perform schema validation without
-                              conversion
-  --validate / --no-validate  Turn on/off validation of input GeoJSON file
-                              before conversion
-  --tolerance FLOAT           Tolerance when deciding if two close point can
-                              be merged(from 0.00001 to 1, otherwise no
-                              merging)
-  --help                      Show this message and exit.
+    --tolerance FLOAT           Change tolerance for deduplicate operation
 ```
+- Validate
+- Merge
 
 ## Example Usage
 - Conversion
 ```
-python GeoJSONtoOSM.py GeoJSONSamples/AllMergeSample.json out.xml Schemas/GlobalOpenSidewalksSchema.json
+python GeoJSONtoOSM.py convert sidewalks GeoJSONSamples/AllMergeSample.json out.xml
 running with lxml.etree
-File in: GeoJSONSamples/AllMergeSample.json
-File out: out.xml
-...
-Checked: Valid GeoJSON Input File
-...
 Input File Read Successfully
 ...
-Merging(Tolerance: 0.0010)
+Running Deduplicate(Tolerance: 0.0010)
 ...
 OSM file saved: out.xml
 ...
-Operation Complete
+Operation Finished
 ...
 ```
 - Validation Only
 ```
-python GeoJSONtoOSM.py --validate_only true GeoJSONSamples/AllMergeSample.json out.xml Schemas/GlobalOpenSidewalksSchema.json
+python GeoJSONtoOSM.py validate sidewalks GeoJSONSamples/AllMergeSample.json
 running with lxml.etree
-File in: GeoJSONSamples/AllMergeSample.json
-File out: out.xml
-...
 Checked: Valid GeoJSON Input File
 ...
-Validation Complete
+Operation Finished
 ...
 ```

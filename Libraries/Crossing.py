@@ -26,6 +26,7 @@ class Crossing(Feature.Feature):
         self.add_header(dom_root)
         id_generator = OSMIDGenerator()
 
+        # TODO: Add support for polygon
         for elt in self.json_database['features']:
             if elt['geometry']['type'] == "LineString":
                 osm_crossing = etree.SubElement(dom_root, 'way')

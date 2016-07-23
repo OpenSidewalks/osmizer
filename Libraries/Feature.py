@@ -174,9 +174,92 @@ class Feature:
         for child in dom_member.getchildren():
             self.__recursive_substitute_nd_id__(child, representative_id, substitute_id)
 
-    def merge(self, dom1, dom2):
+    def merge(self, files_in):
+        """
+        Merge two OSM XML files into one
+
+        :param files_in: an array(tuple) of file paths which refer to the files to be merged
+        :return: a DOM object which contains all data in files_in
+        """
         # TODO: Implement merge
-        raise NotImplementedError()
+        if len(files_in) < 1:
+            click.echo('ERROR: No file input')
+            return None
+        first_load = True
+        merged_dom = None
+        parse_dom = None
+        for file in files_in:
+            parse_dom = self.__parse_xml_file__(file)
+
+            if parse_dom is None:
+                return None
+
+            if first_load:
+                first_load = False
+                merged_dom = parse_dom
+            else:
+                self.__merge_doms__(merged_dom, parse_dom)
+        return merged_dom
+
+    def __parse_xml_file__(self, file_path):
+        """
+        parse xml file to a DOM object from file, handle errors that might occur
+
+        :param file_path: the file path(string) to the import xml file
+        :return: a XML DOM object or None if any error occurs
+        """
+        parser = etree.XMLParser(encoding='utf-8', huge_tree=True)
+        try:
+            tree = etree.parse(file_path, parser)
+        except etree.XMLSyntaxError:
+            click.echo('Error occur while parsing XML file: %s' % file_path)
+            for error in parser.error_log:
+                click.echo(error.message)
+            return None
+        except:
+            click.echo('Unexpected Error!')
+            return None
+
+        elt = etree.fromstring(etree.tostring(tree.getroot()))
+
+        if self.__check_headers__(elt):
+            return elt
+        else:
+            click.echo('Incorrect Header for file: %s' % file_path)
+            return None
+
+    def __check_headers__(self, dom_tree):
+        """
+        Check whether the parsed XML DOM object have correct headers, including encoding in XML declaration
+        and version, generator attributes
+
+        :param dom_tree: the XML DOM to be checked
+        :return: a boolean indicating whether the check is passed
+        """
+        # TODO: Check for UTF encoding
+        root = dom_tree
+        if root.tag != 'osm':
+            return False
+
+        root_attribs = root.attrib
+
+        if root_attribs['version'] != '0.6':
+            return False
+        if root_attribs['generator'] != "OpenSidewalks Data Import Tool":
+            return False
+
+        return True
+
+    def __merge_doms__(self, target_dom, source_dom):
+        """
+        Merge a DOM from another DOM
+
+        :param target_dom: The DOM to be merged (The DOM Object WILL BE modified)
+        :param source_dom: Another DOM providing additional data set
+        :return: None
+        """
+        for node in source_dom.findall('./osm'):
+            target_dom.append(node)
 
     def to_xml(self, xml_dom, output_path):
         """

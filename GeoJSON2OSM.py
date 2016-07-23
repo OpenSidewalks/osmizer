@@ -3,6 +3,7 @@ from json import load as load_json
 from Libraries import Sidewalk
 from Libraries import CurbRamp
 from Libraries import Crossing
+from Libraries import Feature
 
 
 def validation_success():
@@ -52,7 +53,6 @@ def build_features(feature_type, file_in):
         features = CurbRamp.CurbRamp(features_json)
     if feature_type == 'crossings':
         features = Crossing.Crossing(features_json)
-
     return features
 
 
@@ -123,12 +123,19 @@ def convert(json_type, file_in, file_out, tolerance):
 
 
 @cli.command()
-@click.argument('input_1', type=click.Path(exists=True, readable=True, allow_dash=True))
-@click.argument('input_2', type=click.Path(exists=True, readable=True, allow_dash=True))
-@click.argument('output', type=click.Path(exists=False, writable=True, allow_dash=True))
-def merge(input_1, input_2, output):
+@click.argument('file_in', type=click.Path(exists=True, readable=True, allow_dash=True), nargs=-1)
+@click.argument('file_out', type=click.Path(exists=False, writable=True, allow_dash=True), nargs=1)
+def merge(file_in, file_out):
     # TODO: Implement merge in feature object and make connection here
-    pass
+    feature = Feature.Feature()
+    xml_merged = feature.merge(file_in)
+    click.echo('...')
+    if xml_merged is None:
+        click.echo('Operation Terminated')
+        click.echo('...')
+        return
+    feature.to_xml(xml_merged, file_out)
+    operation_finish()
 
 
 if __name__ == '__main__':

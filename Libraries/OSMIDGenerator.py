@@ -7,7 +7,7 @@ class OSMIDGenerator:
 
     def get_next(self):
         """
-        Generate the next OSM object id
+        Generate the next unique OSM object id
 
         :return: an integer representing the ID
         """

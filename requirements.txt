@@ -1,14 +1,5 @@
-# click
 click==6.6
-
-#JSON schema
 jsonschema==2.5.1
-
-#lxml
 lxml==3.6.0
-
-#pip
-pip==7.1.0
-
-#setuptools
-setuptools==18.1
+pkg-resources==0.0.0
+wheel==0.29.0

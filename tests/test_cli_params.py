@@ -1,10 +1,10 @@
 import click
 from click.testing import CliRunner
-from nose.tools import *
+import osmizer.__main__ as osmizer
 
-import GeoJSON2OSM as gj2o
 
 runner = CliRunner()
+
 
 def test_invalid_option():
     try:
@@ -18,15 +18,16 @@ def test_invalid_option():
     else:
         assert False, 'Expected a type error because of an invalid option.'
 
+
 def test_help_text():
-    """Tests appropriate running and output text with help parameter."""
-    result = runner.invoke(gj2o.cli,["--help"])
+    '''Tests appropriate running and output text with help parameter.'''
+    result = runner.invoke(osmizer.cli, ['--help'])
     assert result.exit_code == 0
+
 
 def test_cli_params():
     test_invalid_option()
     test_help_text()
-
 
 
 if __name__ == '__main__':

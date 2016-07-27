@@ -1,5 +1,4 @@
 import copy
-import sys
 
 import click
 import jsonschema
@@ -65,8 +64,8 @@ class Feature:
             click.echo('Error:\n')
             click.echo(err)
             return False
-        except:
-            click.echo('Unexpected error:', sys.exc_info()[0])
+        except Exception as e:
+            click.echo('Unexpected error: ', e)
             return False
 
         return True
@@ -74,11 +73,40 @@ class Feature:
     def convert(self):
         raise NotImplementedError('Implement convert before use')
 
-    def add_header(self, osm_xml_dom_root):
+    @staticmethod
+    def __node_common_attribute__(node):
+        """
+        Add common attributes for a node
+
+        :param node: the node
+        :return: None
+        """
+        node.attrib['visible'] = 'true'
+
+    @staticmethod
+    def __way_common_attribute__(way):
+        """
+        Add common attributes for a way
+
+        :param node: the node
+        :return: None
+        """
+        way.attrib['action'] = 'modify'
+        way.attrib['visible'] = 'true'
+
+    @staticmethod
+    def add_header(osm_xml_dom_root):
+        """
+        Add additional information as header in osm node
+
+        :param osm_xml_dom_root: the dom (WILL BE Modified)
+        :return: None
+        """
         osm_xml_dom_root.attrib['version'] = str(0.6)
         osm_xml_dom_root.attrib['generator'] = 'OpenSidewalks Data Import Tool'
 
-    def dedup(self, xml_dom, tolerance):
+    @staticmethod
+    def dedup(xml_dom, tolerance):
         """
         Merge nodes which are duplicate in a DOM tree
 
@@ -99,7 +127,7 @@ class Feature:
             grouped = False
             for group in nodes_groups:
                 for group_member in group:
-                    if self.__can_group__(group_member, node, tolerance):
+                    if Feature.__can_group__(group_member, node, tolerance):
                         group.append(node)
                         grouped = True
                         break
@@ -113,11 +141,12 @@ class Feature:
             if len(group) > 1:
                 for node in group:
                     if node != group[0]:
-                        self.__substitute_nd_id__(xml_dom, group[0], node)
+                        Feature.__substitute_nd_id__(xml_dom, group[0], node)
 
         return xml_dom
 
-    def __can_group__(self, node_1, node_2, tolerance) -> bool:
+    @staticmethod
+    def __can_group__(node_1, node_2, tolerance) -> bool:
         """
         Decide if two nodes can be grouped(and be merged later)
 
@@ -126,13 +155,14 @@ class Feature:
         :param tolerance: how close (in degree) should the algorithm consider one node is a duplicate of another
         :return: a boolean indicates if two nodes can be grouped
         """
-        if self.__distance__(node_1.attrib['lon'], node_2.attrib['lon']) <= tolerance and \
-                        self.__distance__(node_1.attrib['lat'], node_2.attrib['lat']) <= tolerance:
+        if Feature.__distance__(node_1.attrib['lon'], node_2.attrib['lon']) <= tolerance and \
+                        Feature.__distance__(node_1.attrib['lat'], node_2.attrib['lat']) <= tolerance:
             return True
         else:
             return False
 
-    def __distance__(self, num1, num2) -> float:
+    @staticmethod
+    def __distance__(num1, num2) -> float:
         """
         Calculate distance of two numbers
 
@@ -142,7 +172,8 @@ class Feature:
         """
         return abs(float(num1) - float(num2))
 
-    def __substitute_nd_id__(self, xml_dom, representative_node, substitute_node):
+    @staticmethod
+    def __substitute_nd_id__(xml_dom, representative_node, substitute_node):
         """
         Search through a DOM tree and merge a node
 
@@ -153,10 +184,11 @@ class Feature:
         """
         representative_id = representative_node.attrib['id']
         substitute_id = substitute_node.attrib['id']
-        self.__recursive_substitute_nd_id__(xml_dom, representative_id, substitute_id)
+        Feature.__recursive_substitute_nd_id__(xml_dom, representative_id, substitute_id)
         substitute_node.getparent().remove(substitute_node)
 
-    def __recursive_substitute_nd_id__(self, dom_member, representative_id, substitute_id):
+    @staticmethod
+    def __recursive_substitute_nd_id__(dom_member, representative_id, substitute_id):
         """
         Recursive function which search through a DOM member and substitute the id
 
@@ -172,13 +204,98 @@ class Feature:
             return
 
         for child in dom_member.getchildren():
-            self.__recursive_substitute_nd_id__(child, representative_id, substitute_id)
+            Feature.__recursive_substitute_nd_id__(child, representative_id, substitute_id)
 
-    def merge(self, dom1, dom2):
-        # TODO: Implement merge
-        raise NotImplementedError()
+    @staticmethod
+    def merge(files_in):
+        """
+        Merge two OSM XML files into one
 
-    def to_xml(self, xml_dom, output_path):
+        :param files_in: an array(tuple) of file paths which refer to the files to be merged
+        :return: a DOM object which contains all data in files_in
+        """
+        if len(files_in) < 1:
+            click.echo('ERROR: No file input')
+            return None
+        first_load = True
+        merged_dom = None
+        parse_dom = None
+        for file in files_in:
+            parse_dom = Feature.__parse_xml_file__(file)
+
+            if parse_dom is None:
+                return None
+
+            if first_load:
+                first_load = False
+                merged_dom = parse_dom
+            else:
+                Feature.__merge_doms__(merged_dom, parse_dom)
+        return merged_dom
+
+    @staticmethod
+    def __parse_xml_file__(file_path):
+        """
+        parse xml file to a DOM object from file, handle errors that might occur
+
+        :param file_path: the file path(string) to the import xml file
+        :return: a XML DOM object or None if any error occurs
+        """
+        parser = etree.XMLParser(encoding='utf-8', huge_tree=True)
+        try:
+            tree = etree.parse(file_path, parser)
+        except etree.XMLSyntaxError:
+            click.echo('Error occur while parsing XML file: %s' % file_path)
+            for error in parser.error_log:
+                click.echo(error.message)
+            return None
+        except Exception as e:
+            click.echo('Unexpected Error: ', e)
+            return None
+
+        elt = etree.fromstring(etree.tostring(tree.getroot()))
+
+        if Feature.__check_headers__(elt):
+            return elt
+        else:
+            click.echo('Incorrect Header for file: %s' % file_path)
+            return None
+
+    @staticmethod
+    def __check_headers__(dom_tree):
+        """
+        Check whether the parsed XML DOM object have correct headers, including version and generator attributes
+
+        :param dom_tree: the XML DOM to be checked
+        :return: a boolean indicating whether the check is passed
+        """
+        root = dom_tree
+        if root.tag != 'osm':
+            return False
+
+        root_attribs = root.attrib
+
+        if root_attribs['version'] != '0.6':
+            return False
+        if root_attribs['generator'] != "OpenSidewalks Data Import Tool":
+            return False
+
+        return True
+
+    @staticmethod
+    def __merge_doms__(target_dom, source_dom):
+        """
+        Merge a DOM from another DOM
+
+        :param target_dom: The DOM to be merged (This DOM tree WILL BE modified)
+        :param source_dom: Another DOM providing additional data set
+        :return: None
+        """
+        for node in source_dom.findall('./'):
+            target_dom.append(node)
+
+    @staticmethod
+    def to_xml(xml_dom, output_path):
         """
         Export the DOM tree to file
 

@@ -1,15 +1,16 @@
+import uuid
+
+
 class OSMIDGenerator:
-    def __init__(self, start_num=-1, step_num=-1):
-        if start_num >= 0 or step_num >= 0:
-            raise ValueError('start_number and step cannot be 0 or positive')
-        self.currentNum = start_num
-        self.step = step_num
+    def __init__(self):
+        super().__init__()
 
     def get_next(self):
         """
-        Generate the next OSM object id
+        Generate the next unique OSM object id
 
         :return: an integer representing the ID
         """
-        self.currentNum += self.step
-        return self.currentNum
+        # UUID Hashing Doc: https://docs.python.org/3/library/uuid.html#uuid.uuid4
+        new_uuid = uuid.uuid4()
+        return -int(new_uuid.time_low)

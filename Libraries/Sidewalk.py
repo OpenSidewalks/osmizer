@@ -1,11 +1,12 @@
 from json import load as load_json
 
-from Libraries import Feature
-from Libraries.OSMIDGenerator import OSMIDGenerator
 from lxml import etree
 
+from Libraries.Feature import Feature
+from Libraries.OSMIDGenerator import OSMIDGenerator
 
-class Sidewalk(Feature.Feature):
+
+class Sidewalk(Feature):
     def __init__(self, sidewalks_json):
         """
         Load input sidewalks json object and schema
@@ -26,20 +27,23 @@ class Sidewalk(Feature.Feature):
         self.add_header(dom_root)
         id_generator = OSMIDGenerator()
 
+        # TODO: Add support for polygon
         for elt in self.json_database['features']:
             if elt['geometry']['type'] == 'LineString':
-                osm_way = etree.SubElement(dom_root, 'way')
-                osm_way.attrib['id'] = str(id_generator.get_next())
+                osm_sidewalk = etree.SubElement(dom_root, 'way')
+                osm_sidewalk.attrib['id'] = str(id_generator.get_next())
+                self.__way_common_attribute__(osm_sidewalk)
                 for coordinate in elt['geometry']['coordinates']:
                     osm_node = etree.SubElement(dom_root, 'node')
                     osm_node.attrib['id'] = str(id_generator.get_next())
                     osm_node.attrib['lon'] = str(coordinate[0])
                     osm_node.attrib['lat'] = str(coordinate[1])
-                    osm_nd = etree.SubElement(osm_way, 'nd')
+                    self.__node_common_attribute__(osm_node)
+                    osm_nd = etree.SubElement(osm_sidewalk, 'nd')
                     osm_nd.attrib['ref'] = osm_node.attrib['id']
                 if elt['properties'] is not None:
-                    for prop_key in elt['properties']:
-                        osm_tag = etree.SubElement(osm_way, 'tag')
-                        osm_tag.attrib['k'] = prop_key
-                        osm_tag.attrib['v'] = str(elt['properties'][prop_key])
+                    for prop in elt['properties']:
+                        osm_tag = etree.SubElement(osm_sidewalk, 'tag')
+                        osm_tag.attrib['k'] = prop
+                        osm_tag.attrib['v'] = str(elt['properties'][prop]).lower()
         return dom_root

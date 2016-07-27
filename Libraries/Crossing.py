@@ -1,11 +1,12 @@
 from json import load as load_json
 
-from Libraries import Feature
-from Libraries.OSMIDGenerator import OSMIDGenerator
 from lxml import etree
 
+from Libraries.Feature import Feature
+from Libraries.OSMIDGenerator import OSMIDGenerator
 
-class Crossing(Feature.Feature):
+
+class Crossing(Feature):
     def __init__(self, crossings_json):
         """
         Load input crossings from json object and schema
@@ -26,20 +27,23 @@ class Crossing(Feature.Feature):
         self.add_header(dom_root)
         id_generator = OSMIDGenerator()
 
+        # TODO: Add support for polygon
         for elt in self.json_database['features']:
-            if elt['geometry']['type'] == "LineString":
+            if elt['geometry']['type'] == 'LineString':
                 osm_crossing = etree.SubElement(dom_root, 'way')
                 osm_crossing.attrib['id'] = str(id_generator.get_next())
+                self.__way_common_attribute__(osm_crossing)
                 for coordinate in elt['geometry']['coordinates']:
                     osm_node = etree.SubElement(dom_root, 'node')
                     osm_node.attrib['id'] = str(id_generator.get_next())
                     osm_node.attrib['lon'] = str(coordinate[0])
                     osm_node.attrib['lat'] = str(coordinate[1])
+                    self.__node_common_attribute__(osm_node)
                     osm_nd = etree.SubElement(osm_crossing, 'nd')
                     osm_nd.attrib['ref'] = osm_node.attrib['id']
                 if elt['properties'] is not None:
                     for prop in elt['properties']:
                         osm_tag = etree.SubElement(osm_crossing, 'tag')
                         osm_tag.attrib['k'] = prop
-                        osm_tag.attrib['v'] = str(elt['properties'][prop])
+                        osm_tag.attrib['v'] = str(elt['properties'][prop]).lower()
         return dom_root

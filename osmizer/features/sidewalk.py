@@ -1,28 +1,28 @@
-from json import load as load_json
-
 from lxml import etree
 
-from Libraries.Feature import Feature
-from Libraries.OSMIDGenerator import OSMIDGenerator
+from osmizer.features.feature import Feature
+from osmizer.idgenerator import OSMIDGenerator
+from osmizer import schemas
 
 
 class Sidewalk(Feature):
     def __init__(self, sidewalks_json):
-        """
-        Load input sidewalks json object and schema
+        '''Load input sidewalks json object and schema.
 
-        :param sidewalks_json: the sidewalks json object
-        """
-        schema_path = 'Schemas/Sidewalk_Schema.json'
-        schema_json = load_json(open(schema_path))
+        :param sidewalks_json: the sidewalks json object.
+
+        '''
+        schema_json = schemas.load_schema('sidewalk')
         super().__init__(sidewalks_json, schema_json)
 
     def convert(self):
-        """
-        Convert sidewalks GeoJSON data to DOM tree, features may be duplicated due to the structure of JSON
+        '''Convert sidewalks GeoJSON data to DOM tree, features may be
+        duplicated due to the structure of JSON.
 
-        :return: a DOM tree structure which is equivalent to the sidewalks json database
-        """
+        :return: a DOM tree structure which is equivalent to the sidewalks
+        json database.
+
+        '''
         dom_root = etree.Element('osm')
         self.add_header(dom_root)
         id_generator = OSMIDGenerator()

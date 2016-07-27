@@ -1,51 +1,50 @@
 from json import load as load_json
-
 import click
+from osmizer.features.crossing import Crossing
+from osmizer.features.curbramp import CurbRamp
+from osmizer.features.feature import Feature
+from osmizer.features.sidewalk import Sidewalk
 
-from Libraries.Crossing import Crossing
-from Libraries.CurbRamp import CurbRamp
-from Libraries.Feature import Feature
-from Libraries.Sidewalk import Sidewalk
 
 
 def validation_success():
-    """
+    '''
     Operations to be done when validation success
 
     :return: None
-    """
+    '''
     click.echo('Checked: Valid GeoJSON Input File')
     click.echo('...')
 
 
 def validation_failure():
-    """
+    '''
     Operations to be done when validation fails
 
     :return: None
-    """
+    '''
     click.echo('ERROR: Non-Valid GeoJSON Input File')
     click.echo('...')
 
 
 def operation_finish():
-    """
+    '''
     Operations to be done after all operations are performed successfully
 
     :return: None
-    """
+    '''
     click.echo('Operation Finished')
     click.echo('...')
 
 
 def build_features(feature_type, file_in):
-    """
+    '''
     Build a feature object
 
     :param feature_type: type of the feature to be built
     :param file_in: the input data base
     :return: the feature object containing the input data base
-    """
+    '''
     features = None
     features_json = load_json(open(file_in))
 
@@ -60,18 +59,13 @@ def build_features(feature_type, file_in):
 
 @click.group(invoke_without_command=False)
 def cli():
-    click.echo('...')
-    click.echo('Data Import Tool for OpenSidewalks Project')
-    click.echo('Data Science and Social Good')
-    click.echo('Taskar Center of Accessible Technology')
-    click.echo('University of Washington')
-    click.echo('...')
     pass
 
 
 @cli.command()
 @click.argument('json_type')
-@click.argument('file_in', type=click.Path(exists=True, readable=True, allow_dash=True))
+@click.argument('file_in', type=click.Path(exists=True, readable=True,
+                allow_dash=True))
 def validate(json_type, file_in):
     features = build_features(json_type, file_in)
 
@@ -88,11 +82,14 @@ def validate(json_type, file_in):
 
 
 @cli.command()
-@click.option('--tolerance', default=0.001, help='Tolerance when deciding if two close point can be merged'
-                                                 '(from 0.00001 to 1, otherwise no merging)')
+@click.option('--tolerance', default=0.001,
+              help=('Tolerance when deciding if two close point can be merged'
+                    '(from 0.00001 to 1, otherwise no merging)'))
 @click.argument('json_type')
-@click.argument('file_in', type=click.Path(exists=True, readable=True, allow_dash=True))
-@click.argument('file_out', type=click.Path(exists=False, writable=True, allow_dash=True))
+@click.argument('file_in', type=click.Path(exists=True, readable=True,
+                allow_dash=True))
+@click.argument('file_out', type=click.Path(exists=False, writable=True,
+                allow_dash=True))
 def convert(json_type, file_in, file_out, tolerance):
     features = build_features(json_type, file_in)
 
@@ -126,8 +123,10 @@ def convert(json_type, file_in, file_out, tolerance):
 
 
 @cli.command()
-@click.argument('file_in', type=click.Path(exists=True, readable=True, allow_dash=True), nargs=-1)
-@click.argument('file_out', type=click.Path(exists=False, writable=True, allow_dash=True), nargs=1)
+@click.argument('file_in', type=click.Path(exists=True, readable=True,
+                allow_dash=True), nargs=-1)
+@click.argument('file_out', type=click.Path(exists=False, writable=True,
+                allow_dash=True), nargs=1)
 def merge(file_in, file_out):
     xml_merged = Feature.merge(file_in)
     click.echo('...')

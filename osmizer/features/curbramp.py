@@ -1,28 +1,28 @@
-from json import load as load_json
-
 from lxml import etree
 
-from Libraries.Feature import Feature
-from Libraries.OSMIDGenerator import OSMIDGenerator
+from osmizer.features.feature import Feature
+from osmizer.idgenerator import OSMIDGenerator
+from osmizer import schemas
 
 
 class CurbRamp(Feature):
     def __init__(self, curbramps_json):
-        """
-        Load input curb ramps from json object and schema
+        '''Load input curb ramps from json object and schema.
 
-        :param curbramps_json: the curb ramps json object
-        """
-        schema_path = 'Schemas/CurbRamp_Schema.json'
-        schema_json = load_json(open(schema_path))
+        :param curbramps_json: the curb ramps json object.
+
+        '''
+        schema_json = schemas.load_schema('crossing')
         super().__init__(curbramps_json, schema_json)
 
     def convert(self):
-        """
-        Convert curb ramps GeoJSON data to DOM tree, features may be duplicated due to the structure of JSON
+        '''Convert curb ramps GeoJSON data to DOM tree, features may be
+        duplicated due to the structure of JSON.
 
-        :return: a DOM tree structure which is equivalent to the curb ramps json database
-        """
+        :return: a DOM tree structure which is equivalent to the curb ramps
+                 json database.
+
+        '''
         dom_root = etree.Element('osm')
         self.add_header(dom_root)
         id_generator = OSMIDGenerator()

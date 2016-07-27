@@ -1,33 +1,34 @@
-from json import load as load_json
-
 from lxml import etree
 
-from Libraries.Feature import Feature
-from Libraries.OSMIDGenerator import OSMIDGenerator
+from osmizer.features.feature import Feature
+from osmizer.idgenerator import OSMIDGenerator
+from osmizer import schemas
 
 
 class Crossing(Feature):
     def __init__(self, crossings_json):
-        """
-        Load input crossings from json object and schema
+        '''Load input crossings from json object and schema
 
         :param crossings_json: the crossings json object
-        """
-        schema_path = 'Schemas/Crossing_Schema.json'
-        schema_json = load_json(open(schema_path))
+
+        '''
+        schema_json = schemas.load_schema('crossing')
         super().__init__(crossings_json, schema_json)
 
     def convert(self):
-        """
-        Convert crossings GeoJSON data to DOM tree, features may be duplicated due to the structure of JSON
+        '''Convert crossings GeoJSON data to DOM tree, features may be duplicated
+        due to the structure of JSON.
 
-        :return: a DOM tree structure which is equivalent to the crossings json database
-        """
+        :return: a DOM tree structure which is equivalent to the crossings
+                 json database
+
+        '''
         dom_root = etree.Element('osm')
         self.add_header(dom_root)
         id_generator = OSMIDGenerator()
 
         # TODO: Add support for polygon
+        # TODO: refactor - too deeply nested
         for elt in self.json_database['features']:
             if elt['geometry']['type'] == 'LineString':
                 osm_crossing = etree.SubElement(dom_root, 'way')

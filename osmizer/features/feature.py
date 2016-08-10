@@ -122,17 +122,15 @@ class Feature:
                 nodes.append(child)
 
         # Group nodes when they are close
+        n = 0
         nodes_groups = []
-        grouped = False
         for node in nodes:
             grouped = False
             for group in nodes_groups:
-                for group_member in group:
-                    if Feature.__can_group__(group_member, node, tolerance):
-                        group.append(node)
-                        grouped = True
-                        break
-                if grouped:
+                if Feature.__can_group__(group[0], node, tolerance):
+                    group.append(node)
+                    grouped = True
+                    n += 1
                     break
             if not grouped:
                 nodes_groups.append([node])
@@ -140,9 +138,9 @@ class Feature:
         # Merge nodes
         for group in nodes_groups:
             if len(group) > 1:
-                for node in group:
-                    if node != group[0]:
-                        Feature.__substitute_nd_id__(xml_dom, group[0], node)
+                to_node = group[0]
+                from_nodes = group[1:]
+                Feature.__substitute_nd_id__(xml_dom, from_nodes, to_node)
 
         return xml_dom
 
@@ -182,46 +180,42 @@ class Feature:
         return abs(float(num1) - float(num2))
 
     @staticmethod
-    def __substitute_nd_id__(xml_dom, representative_node, substitute_node):
+    def __substitute_nd_id__(xml_dom, from_nodes, to_node):
         '''Search through a DOM tree and merge a node.
 
         :param xml_dom: the DOM tree.
-        :param representative_node: the node that substitute_node is to be
+        :param to_node: the node that substitute_node is to be
                                     merged to.
-        :param substitute_node: the node to be merged to representative_node.
+        :param from_nodes: the node to be merged to representative_node.
         :return:
 
         '''
-        representative_id = representative_node.attrib['id']
-        substitute_id = substitute_node.attrib['id']
-        Feature.__recursive_substitute_nd_id__(xml_dom, representative_id,
-                                               substitute_id)
-        substitute_node.getparent().remove(substitute_node)
+        to_id = to_node.attrib['id']
+        from_ids = []
+        for from_node in from_nodes:
+            from_ids.append(from_node.attrib['id'])
+        Feature.__recursive_substitute_nd_id__(xml_dom, from_ids, to_id)
+
+        for from_node in from_nodes:
+            from_node.getparent().remove(from_node)
 
     @staticmethod
-    def __recursive_substitute_nd_id__(dom_member, representative_id,
-                                       substitute_id):
+    def __recursive_substitute_nd_id__(dom_member, from_ids, to_id):
         '''Recursive function which search through a DOM member and substitute
         the id.
 
         :param dom_member: a member of the DOM tree.
-        :param representative_id: the id of the node that substitute_id is to
-                                  be merged to.
-        :param substitute_id: the id of the node to be merged to
-                              representative_id.
+        :param to_id: The id of the node that substitute_id is to be merged to.
+        :param from_id: The id of the node to be merged to representative_id.
         :return:
 
         '''
-        if dom_member.tag == 'nd' and \
-           dom_member.attrib['ref'] == substitute_id:
-            dom_member.attrib['ref'] = representative_id
-
-        if len(dom_member.getchildren()) == 0:
-            return
+        if dom_member.tag == 'nd':
+            if dom_member.attrib['ref'] in from_ids:
+                dom_member.attrib['ref'] = to_id
 
         for child in dom_member.getchildren():
-            Feature.__recursive_substitute_nd_id__(child, representative_id,
-                                                   substitute_id)
+            Feature.__recursive_substitute_nd_id__(child, from_ids, to_id)
 
     @staticmethod
     def merge(files_in):

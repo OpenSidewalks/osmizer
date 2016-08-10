@@ -6,7 +6,6 @@ from osmizer.features.feature import Feature
 from osmizer.features.sidewalk import Sidewalk
 
 
-
 def validation_success():
     '''
     Operations to be done when validation success
@@ -82,9 +81,9 @@ def validate(json_type, file_in):
 
 
 @cli.command()
-@click.option('--tolerance', default=0.001,
-              help=('Tolerance when deciding if two close point can be merged'
-                    '(from 0.00001 to 1, otherwise no merging)'))
+@click.option('--tolerance', default=0.0000001,
+              help=('Tolerance when deciding if two close points should be \
+                     merged'))
 @click.argument('json_type')
 @click.argument('file_in', type=click.Path(exists=True, readable=True,
                 allow_dash=True))
@@ -106,10 +105,9 @@ def convert(json_type, file_in, file_out, tolerance):
         click.echo('Input File Read Successfully')
         click.echo('...')
 
-    if 0.00001 < tolerance < 1:
-        click.echo('Running Deduplicate(Tolerance: %.4f)' % tolerance)
-        features.dedup(xml_dom, tolerance)
-        click.echo('...')
+    click.echo('Running Deduplicate(Tolerance: %.4f)' % tolerance)
+    features.dedup(xml_dom, tolerance)
+    click.echo('...')
 
     if features.to_xml(xml_dom, file_out):
         click.echo('OSM file saved: %s' % file_out)

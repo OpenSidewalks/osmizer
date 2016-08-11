@@ -105,7 +105,7 @@ class Feature:
         :return: None
         '''
         osm_xml_dom_root.attrib['version'] = str(0.6)
-        osm_xml_dom_root.attrib['generator'] = 'OpenSidewalks Data Import Tool'
+        osm_xml_dom_root.attrib['generator'] = 'osmizer'
 
     @staticmethod
     def dedup(xml_dom, tolerance):
@@ -122,7 +122,6 @@ class Feature:
         nodes_dict = OrderedDict()
         node_refs = xml_dom.findall('.//nd')
 
-        # TODO: Replace with findall
         for child in xml_dom.findall('.//node[@lon][@lat]'):
             child_id = int(child.attrib['id'])
             left = float(child.attrib['lon'])
@@ -133,37 +132,42 @@ class Feature:
             nodes_rtree.insert(child_id, coordinate, obj=coordinate)
             nodes_dict[child_id] = child
 
-        while nodes_dict:
-            to_id, to_node = nodes_dict.popitem()
+        total = len(nodes_dict)
+        with click.progressbar(length=total, label='Deduping') as bar:
+            while nodes_dict:
+                previous = len(nodes_dict)
 
-            left = float(to_node.attrib['lon'])
-            right = left
-            bottom = float(to_node.attrib['lat'])
-            top = bottom
+                to_id, to_node = nodes_dict.popitem()
 
-            # Remove from RTree
-            nodes_rtree.delete(to_id, (left, bottom, right, top))
+                left = float(to_node.attrib['lon'])
+                right = left
+                bottom = float(to_node.attrib['lat'])
+                top = bottom
 
-            tolerance_half = tolerance / 2.0
-            bounding_box = (left - tolerance_half,
-                            bottom - tolerance_half,
-                            right + tolerance_half,
-                            top + tolerance_half)
+                # Remove from RTree
+                nodes_rtree.delete(to_id, (left, bottom, right, top))
 
-            hits = nodes_rtree.intersection(bounding_box, objects=True)
-            # from_ids = []
-            # TODO: calculate distance
-            for item in hits:
-                from_id = item.id
-                from_coords = item.object
-                from_node = nodes_dict[from_id]
-                Feature._substitute_ndids(node_refs, str(from_id), str(to_id))
-                # Remove the node from the DOM
-                from_node.getparent().remove(from_node)
-                # Remove the node from RTree
-                nodes_rtree.delete(from_id, from_coords)
-                # Pop the node from Dictionary
-                nodes_dict.pop(from_id)
+                tolerance_half = tolerance / 2.0
+                bounding_box = (left - tolerance_half,
+                                bottom - tolerance_half,
+                                right + tolerance_half,
+                                top + tolerance_half)
+
+                hits = nodes_rtree.intersection(bounding_box, objects=True)
+                # from_ids = []
+                # TODO: calculate distance
+                for item in hits:
+                    from_id = item.id
+                    from_coords = item.object
+                    from_node = nodes_dict[from_id]
+                    Feature._substitute_ndids(node_refs, str(from_id), str(to_id))
+                    # Remove the node from the DOM
+                    from_node.getparent().remove(from_node)
+                    # Remove the node from RTree
+                    nodes_rtree.delete(from_id, from_coords)
+                    # Pop the node from Dictionary
+                    nodes_dict.pop(from_id)
+                bar.update(previous - len(nodes_dict))
 
     @staticmethod
     def _substitute_ndids(node_refs, from_id, to_id):
@@ -254,7 +258,7 @@ class Feature:
 
         if root_attribs['version'] != '0.6':
             return False
-        if root_attribs['generator'] != 'OpenSidewalks Data Import Tool':
+        if root_attribs['generator'] != 'osmizer':
             return False
 
         return True

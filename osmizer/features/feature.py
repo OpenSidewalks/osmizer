@@ -120,34 +120,21 @@ class Feature:
         # Sort out all nodes
         nodes_rtree = index.Index()
         nodes_dict = OrderedDict()
+        node_refs = xml_dom.findall('.//nd')
 
-        for child in list(xml_dom):
-            if child.tag == 'node' and ('lon' and 'lat') in child.attrib:
-                child_id = int(child.attrib['id'])
-                left = float(child.attrib['lon'])
-                right = left
-                bottom = float(child.attrib['lat'])
-                top = bottom
-                coordinate = (left, bottom, right, top)
-                nodes_rtree.insert(child_id, coordinate, obj=coordinate)
-                nodes_dict[child_id] = child
-                # nodes.append(child)
-                # OrderedDict consider
+        # TODO: Replace with findall
+        for child in xml_dom.findall('.//node[@lon][@lat]'):
+            child_id = int(child.attrib['id'])
+            left = float(child.attrib['lon'])
+            right = left
+            bottom = float(child.attrib['lat'])
+            top = bottom
+            coordinate = (left, bottom, right, top)
+            nodes_rtree.insert(child_id, coordinate, obj=coordinate)
+            nodes_dict[child_id] = child
 
-        total = len(nodes_dict)
-        progress_show_step = 15
-        cur_step = 0
-        while len(nodes_dict) > 0:
-            # Show progress
-            if cur_step >= progress_show_step:
-                click.echo('Progress: {:03.1f}%\r'.format((1.0 - len(nodes_dict)/total)*100))
-                cur_step = 0
-            else:
-                cur_step += 1
-            # Pop next item
-            current_pair = nodes_dict.popitem()
-            to_id = current_pair[0]
-            to_node = current_pair[1]
+        while nodes_dict:
+            to_id, to_node = nodes_dict.popitem()
 
             left = float(to_node.attrib['lon'])
             right = left
@@ -164,96 +151,34 @@ class Feature:
                             top + tolerance_half)
 
             hits = nodes_rtree.intersection(bounding_box, objects=True)
-            from_ids = []
-            for i in hits:
-                from_id = i.id
+            # from_ids = []
+            # TODO: calculate distance
+            for item in hits:
+                from_id = item.id
+                from_coords = item.object
                 from_node = nodes_dict[from_id]
-                # Remove from DOM
+                Feature._substitute_ndids(node_refs, str(from_id), str(to_id))
+                # Remove the node from the DOM
                 from_node.getparent().remove(from_node)
-                # Remove from RTree
-                nodes_rtree.delete(from_id, i.object)
-                # Pop from Dictionary
+                # Remove the node from RTree
+                nodes_rtree.delete(from_id, from_coords)
+                # Pop the node from Dictionary
                 nodes_dict.pop(from_id)
-                # Add to from iDs list
-                from_ids.append(from_id)
-            Feature.__recursive_substitute_nd_id__(xml_dom, from_ids, to_id)
-
-        click.echo('Progress: 100.0%\r')
-        return xml_dom
 
     @staticmethod
-    def __can_group__(node_1, node_2, tolerance) -> bool:
-        '''Decide if two nodes can be grouped(and be merged later).
+    def _substitute_ndids(node_refs, from_id, to_id):
+        '''Replaces all node refs with from_ids with to_id.
 
-        :param node_1: a node.
-        :param node_2: another node.
-        :param tolerance: how close (in degree) should the algorithm consider
-                          one node is a duplicate of another.
-        :return: a boolean indicates if two nodes can be grouped.
-        '''
-        # FIXME: shouldn't use special methods
-        node_1_lon = node_1.attrib['lon']
-        node_1_lat = node_1.attrib['lat']
-        node_2_lon = node_1.attrib['lon']
-        node_2_lat = node_2.attrib['lat']
-
-        lon_diff = Feature.__distance__(node_1_lon, node_2_lon)
-        lat_diff = Feature.__distance__(node_1_lat, node_2_lat)
-        if lon_diff <= tolerance and lat_diff <= tolerance:
-            return True
-        else:
-            return False
-
-    @staticmethod
-    def __distance__(num1, num2) -> float:
-        '''Calculate distance of two numbers.
-
-        :param num1: a number, do not necessarily have to be a number type.
-        :param num2: another number, do not necessarily have to be a number
-                     type.
-        :return: a float of their distance.
-
-        '''
-        return abs(float(num1) - float(num2))
-
-    @staticmethod
-    def __substitute_nd_id__(xml_dom, from_nodes, to_node):
-        '''Search through a DOM tree and merge a node.
-
-        :param xml_dom: the DOM tree.
-        :param to_node: the node that substitute_node is to be
-                                    merged to.
-        :param from_nodes: the node to be merged to representative_node.
+        :param node_refs: A list of node reference elments (previously
+                          generated).
+        :param from_id: The ID of the node to be merged to representative_id.
+        :param to_id: The ID of the node that substitute_id is to be merged to.
         :return:
 
         '''
-        to_id = to_node.attrib['id']
-        from_ids = []
-        for from_node in from_nodes:
-            from_ids.append(from_node.attrib['id'])
-        Feature.__recursive_substitute_nd_id__(xml_dom, from_ids, to_id)
-
-        for from_node in from_nodes:
-            from_node.getparent().remove(from_node)
-
-    @staticmethod
-    def __recursive_substitute_nd_id__(dom_member, from_ids, to_id):
-        '''Recursive function which search through a DOM member and substitute
-        the id.
-
-        :param dom_member: a member of the DOM tree.
-        :param to_id: The id of the node that substitute_id is to be merged to.
-        :param from_id: The id of the node to be merged to representative_id.
-        :return:
-
-        '''
-        if dom_member.tag == 'nd':
-            if dom_member.attrib['ref'] in from_ids:
-                dom_member.attrib['ref'] = to_id
-            return
-
-        for child in dom_member.getchildren():
-            Feature.__recursive_substitute_nd_id__(child, from_ids, to_id)
+        for element in node_refs:
+            if element.attrib['ref'] == from_id:
+                element.set('ref', to_id)
 
     @staticmethod
     def merge(files_in):

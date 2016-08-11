@@ -105,7 +105,7 @@ def convert(json_type, file_in, file_out, tolerance):
         click.echo('Input File Read Successfully')
         click.echo('...')
 
-    click.echo('Running Deduplicate(Tolerance: %.4f)' % tolerance)
+    click.echo('Running Deduplicate(Tolerance: %.8f)' % tolerance)
     features.dedup(xml_dom, tolerance)
     click.echo('...')
 

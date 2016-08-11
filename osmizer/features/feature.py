@@ -133,15 +133,9 @@ class Feature:
             nodes_dict[child_id] = child
 
         total = len(nodes_dict)
-        step = 20
-        cur_step = 0
         with click.progressbar(length=total, label='Deduping') as bar:
             while nodes_dict:
-                if cur_step >= step:
-                    bar.update(total - len(nodes_dict))
-                    cur_step = 0
-                else:
-                    cur_step += 1
+                bar.update(total - len(nodes_dict))
                 to_id, to_node = nodes_dict.popitem()
 
                 left = float(to_node.attrib['lon'])
@@ -172,6 +166,7 @@ class Feature:
                     nodes_rtree.delete(from_id, from_coords)
                     # Pop the node from Dictionary
                     nodes_dict.pop(from_id)
+            bar.update(total)
 
     @staticmethod
     def _substitute_ndids(node_refs, from_id, to_id):

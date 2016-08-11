@@ -109,6 +109,7 @@ def convert(json_type, file_in, file_out, tolerance):
     features.dedup(xml_dom, tolerance)
     click.echo('...')
 
+    click.echo('Saving file to %s' % file_out)
     if features.to_xml(xml_dom, file_out):
         click.echo('OSM file saved: %s' % file_out)
         click.echo('...')

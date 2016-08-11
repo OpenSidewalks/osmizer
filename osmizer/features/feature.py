@@ -2,6 +2,8 @@ import copy
 
 import click
 import jsonschema
+from rtree import index
+from collections import OrderedDict
 
 # import lxml etree
 try:
@@ -116,31 +118,56 @@ class Feature:
 
         '''
         # Sort out all nodes
-        nodes = []
+        nodes_rtree = index.Index()
+        nodes_dict = OrderedDict()
+
         for child in list(xml_dom):
             if child.tag == 'node' and ('lon' and 'lat') in child.attrib:
-                nodes.append(child)
+                child_id = int(child.attrib['id'])
+                left = float(child.attrib['lon'])
+                right = left
+                bottom = float(child.attrib['lat'])
+                top = bottom
+                coordinate = (left, bottom, right, top)
+                nodes_rtree.insert(child_id, coordinate, obj=coordinate)
+                nodes_dict[child_id] = child
+                # nodes.append(child)
+                # OrderedDict consider
 
-        # Group nodes when they are close
-        n = 0
-        nodes_groups = []
-        for node in nodes:
-            grouped = False
-            for group in nodes_groups:
-                if Feature.__can_group__(group[0], node, tolerance):
-                    group.append(node)
-                    grouped = True
-                    n += 1
-                    break
-            if not grouped:
-                nodes_groups.append([node])
+        while len(nodes_dict) > 0:
+            # Pop next item
+            current_pair = nodes_dict.popitem()
+            to_id = current_pair[0]
+            to_node = current_pair[1]
 
-        # Merge nodes
-        for group in nodes_groups:
-            if len(group) > 1:
-                to_node = group[0]
-                from_nodes = group[1:]
-                Feature.__substitute_nd_id__(xml_dom, from_nodes, to_node)
+            left = float(to_node.attrib['lon'])
+            right = left
+            bottom = float(to_node.attrib['lat'])
+            top = bottom
+
+            # Remove from RTree
+            nodes_rtree.delete(to_id, (left, bottom, right, top))
+
+            tolerance_half = tolerance / 2.0
+            bounding_box = (left - tolerance_half,
+                            bottom - tolerance_half,
+                            right + tolerance_half,
+                            top + tolerance_half)
+
+            hits = nodes_rtree.intersection(bounding_box, objects=True)
+            from_ids = []
+            for i in hits:
+                from_id = i.id
+                from_node = nodes_dict[from_id]
+                # Remove from DOM
+                from_node.getparent().remove(from_node)
+                # Remove from RTree
+                nodes_rtree.delete(from_id, i.object)
+                # Pop from Dictionary
+                nodes_dict.pop(from_id)
+                # Add to from iDs list
+                from_ids.append(from_id)
+            Feature.__recursive_substitute_nd_id__(xml_dom, from_ids, to_id)
 
         return xml_dom
 
@@ -213,6 +240,7 @@ class Feature:
         if dom_member.tag == 'nd':
             if dom_member.attrib['ref'] in from_ids:
                 dom_member.attrib['ref'] = to_id
+            return
 
         for child in dom_member.getchildren():
             Feature.__recursive_substitute_nd_id__(child, from_ids, to_id)

@@ -42,5 +42,5 @@ def dedupe(features, xml_dom, tolerance=0.00001):
 
 features, xml_dom = convert('sidewalks', '../sidewalks-udistrict.geojson')
 
-dedupe(features, xml_dom)
-# cProfile.run('dedupe(features, xml_dom)')
+# dedupe(features, xml_dom)
+cProfile.run('dedupe(features, xml_dom)')

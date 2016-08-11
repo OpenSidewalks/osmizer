@@ -134,7 +134,16 @@ class Feature:
                 # nodes.append(child)
                 # OrderedDict consider
 
+        total = len(nodes_dict)
+        progress_show_step = 15
+        cur_step = 0
         while len(nodes_dict) > 0:
+            # Show progress
+            if cur_step >= progress_show_step:
+                click.echo('Progress: {:03.1f}%\r'.format((1.0 - len(nodes_dict)/total)*100))
+                cur_step = 0
+            else:
+                cur_step += 1
             # Pop next item
             current_pair = nodes_dict.popitem()
             to_id = current_pair[0]
@@ -169,6 +178,7 @@ class Feature:
                 from_ids.append(from_id)
             Feature.__recursive_substitute_nd_id__(xml_dom, from_ids, to_id)
 
+        click.echo('Progress: 100.0%\r')
         return xml_dom
 
     @staticmethod

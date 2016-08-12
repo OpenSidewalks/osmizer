@@ -1,4 +1,5 @@
 from json import load as load_json
+
 import click
 from osmizer.features.crossing import Crossing
 from osmizer.features.curbramp import CurbRamp
@@ -96,22 +97,21 @@ def convert(json_type, file_in, file_out, tolerance):
         click.echo('Invalid JSON input type')
         return
 
+    click.echo('Converting Input File')
     xml_dom = features.convert()
     if xml_dom is False:
-        click.echo('Failed to Read Input File')
+        click.echo('Failed to Convert Input File')
         click.echo('Operation Terminated')
         return
     else:
-        click.echo('Input File Read Successfully')
         click.echo('...')
 
-    click.echo('Running Deduplicate(Tolerance: %.8f)' % tolerance)
+    click.echo('Deduping Output(Tolerance: %.8f)' % tolerance)
     features.dedup(xml_dom, tolerance)
     click.echo('...')
 
-    click.echo('Saving file to %s' % file_out)
     if features.to_xml(xml_dom, file_out):
-        click.echo('OSM file saved: %s' % file_out)
+        click.echo('OSM File Saved as %s' % file_out)
         click.echo('...')
     else:
         click.echo('OSM file failed to save')
@@ -122,12 +122,12 @@ def convert(json_type, file_in, file_out, tolerance):
 
 
 @cli.command()
-@click.argument('file_in', type=click.Path(exists=True, readable=True,
+@click.argument('files_in', type=click.Path(exists=True, readable=True,
                 allow_dash=True), nargs=-1)
 @click.argument('file_out', type=click.Path(exists=False, writable=True,
                 allow_dash=True), nargs=1)
-def merge(file_in, file_out):
-    xml_merged = Feature.merge(file_in)
+def merge(files_in, file_out):
+    xml_merged = Feature.merge(files_in)
     click.echo('...')
     if xml_merged is None:
         click.echo('Operation Terminated')

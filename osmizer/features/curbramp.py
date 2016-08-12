@@ -3,6 +3,7 @@ from lxml import etree
 from osmizer.features.feature import Feature
 from osmizer.idgenerator import OSMIDGenerator
 from osmizer import schemas
+from click import progressbar
 
 
 class CurbRamp(Feature):
@@ -27,16 +28,20 @@ class CurbRamp(Feature):
         self.add_header(dom_root)
         id_generator = OSMIDGenerator()
 
-        for elt in self.json_database['features']:
-            if elt['geometry']['type'] == 'Point':
-                osm_curbramp = etree.SubElement(dom_root, 'node')
-                self.__node_common_attribute__(osm_curbramp)
-                osm_curbramp.attrib['id'] = str(id_generator.get_next())
-                osm_curbramp.attrib['lon'] = str(elt['geometry']['coordinates'][0])
-                osm_curbramp.attrib['lat'] = str(elt['geometry']['coordinates'][1])
-                if elt['properties'] is not None:
-                    for prop in elt['properties']:
-                        osm_tag = etree.SubElement(osm_curbramp, 'tag')
-                        osm_tag.attrib['k'] = prop
-                        osm_tag.attrib['v'] = str(elt['properties'][prop]).lower()
+        with progressbar(length=len(self.json_database['features']), label='Converting') as bar:
+            for elt in self.json_database['features']:
+                if elt['geometry']['type'] == 'Point':
+                    osm_curbramp = etree.SubElement(dom_root, 'node')
+                    self.__node_common_attribute__(osm_curbramp)
+                    osm_curbramp.attrib['id'] = str(id_generator.get_next())
+                    osm_curbramp.attrib['lon'] = str(elt['geometry']['coordinates'][0])
+                    osm_curbramp.attrib['lat'] = str(elt['geometry']['coordinates'][1])
+                    if elt['properties'] is not None:
+                        for prop in elt['properties']:
+                            osm_tag = etree.SubElement(osm_curbramp, 'tag')
+                            osm_tag.attrib['k'] = prop
+                            osm_tag.attrib['v'] = str(elt['properties'][prop]).lower()
+                bar.update(1)
+            bar.finish()
+
         return dom_root

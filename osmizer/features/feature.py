@@ -1,41 +1,11 @@
+from lxml import etree
+
 import copy
+from collections import OrderedDict
 
 import click
 import jsonschema
 from rtree import index
-from collections import OrderedDict
-
-# import lxml etree
-try:
-    from lxml import etree
-
-    print('running with lxml.etree')
-except ImportError:
-    try:
-        # Python 2.5
-        import xml.etree.cElementTree as etree
-
-        print('running with cElementTree on Python 2.5+')
-    except ImportError:
-        try:
-            # Python 2.5
-            import xml.etree.ElementTree as etree
-
-            print('running with ElementTree on Python 2.5+')
-        except ImportError:
-            try:
-                # normal cElementTree install
-                import cElementTree as etree
-
-                print('running with cElementTree')
-            except ImportError:
-                try:
-                    # normal ElementTree install
-                    import elementtree.ElementTree as etree
-
-                    print('running with ElementTree')
-                except ImportError:
-                    print('Failed to import ElementTree from any known place')
 
 
 class Feature:
@@ -121,15 +91,19 @@ class Feature:
         nodes_rtree = index.Index()
         nodes_dict = OrderedDict()
 
-        for child in xml_dom.findall('.//node[@lon][@lat]'):
-            child_id = int(child.attrib['id'])
-            left = float(child.attrib['lon'])
-            right = left
-            bottom = float(child.attrib['lat'])
-            top = bottom
-            coordinate = (left, bottom, right, top)
-            nodes_rtree.insert(child_id, coordinate, obj=coordinate)
-            nodes_dict[child_id] = child
+        all_nodes = xml_dom.findall('.//node[@lon][@lat]')
+        with click.progressbar(length=len(all_nodes), label='Sorting') as bar:
+            for child in all_nodes:
+                child_id = int(child.attrib['id'])
+                left = float(child.attrib['lon'])
+                right = left
+                bottom = float(child.attrib['lat'])
+                top = bottom
+                coordinate = (left, bottom, right, top)
+                nodes_rtree.insert(child_id, coordinate, obj=coordinate)
+                nodes_dict[child_id] = child
+                bar.update(1)
+            bar.finish()
 
         # Dictionary to store noderef (nd element) refs (node IDs) as keys,
         # where values are a list of xml dom values that can be updated
@@ -141,12 +115,15 @@ class Feature:
             return xml_dom
 
         nd_map = {}
-        for nd in nds:
-            ndref = nd.attrib['ref']
-            if ndref in nd_map:
-                nd_map[ndref].append(nd)
-            else:
-                nd_map[ndref] = [nd]
+        with click.progressbar(length=len(all_nodes), label='Building Map') as bar:
+            for nd in nds:
+                ndref = nd.attrib['ref']
+                if ndref in nd_map:
+                    nd_map[ndref].append(nd)
+                else:
+                    nd_map[ndref] = [nd]
+                bar.update(1)
+            bar.finish()
 
         total = len(nodes_dict)
         skip_count = 0
@@ -196,6 +173,7 @@ class Feature:
         if skip_count:
             click.echo('Skipped {} nodes due to potential race'
                        'condition'.format(skip_count))
+        bar.finish()
 
     @staticmethod
     def _substitute_ndids(node_refs, from_id, to_id):

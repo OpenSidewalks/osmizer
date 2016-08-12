@@ -30,15 +30,10 @@ class CurbRamp(Feature):
         for elt in self.json_database['features']:
             if elt['geometry']['type'] == 'Point':
                 osm_curbramp = etree.SubElement(dom_root, 'node')
-                osm_curbramp.attrib['id'] = str(id_generator.get_next())
                 self.__node_common_attribute__(osm_curbramp)
-                osm_node = etree.SubElement(dom_root, 'node')
-                osm_node.attrib['id'] = str(id_generator.get_next())
-                osm_node.attrib['lon'] = str(elt['geometry']['coordinates'][0])
-                osm_node.attrib['lat'] = str(elt['geometry']['coordinates'][1])
-                self.__node_common_attribute__(osm_node)
-                osm_nd = etree.SubElement(osm_curbramp, 'nd')
-                osm_nd.attrib['ref'] = osm_node.attrib['id']
+                osm_curbramp.attrib['id'] = str(id_generator.get_next())
+                osm_curbramp.attrib['lon'] = str(elt['geometry']['coordinates'][0])
+                osm_curbramp.attrib['lat'] = str(elt['geometry']['coordinates'][1])
                 if elt['properties'] is not None:
                     for prop in elt['properties']:
                         osm_tag = etree.SubElement(osm_curbramp, 'tag')

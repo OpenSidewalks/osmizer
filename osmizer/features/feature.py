@@ -135,6 +135,11 @@ class Feature:
         # where values are a list of xml dom values that can be updated
         # directly during deduping.
         nds = xml_dom.findall('.//nd')
+
+        # If there aren't any node refs (e.g. just point data), don't dedupe
+        if not nds:
+            return xml_dom
+
         nd_map = {}
         for nd in nds:
             ndref = nd.attrib['ref']
@@ -219,20 +224,15 @@ class Feature:
         if len(files_in) < 1:
             click.echo('ERROR: No file input')
             return None
-        first_load = True
-        merged_dom = None
-        parse_dom = None
-        for file in files_in:
-            parse_dom = Feature.__parse_xml_file__(file)
+
+        merged_dom = Feature.__parse_xml_file__(files_in[0])
+        for file_in in files_in[1:]:
+            parse_dom = Feature.__parse_xml_file__(file_in)
 
             if parse_dom is None:
                 return None
 
-            if first_load:
-                first_load = False
-                merged_dom = parse_dom
-            else:
-                Feature.__merge_doms__(merged_dom, parse_dom)
+            Feature.__merge_doms__(merged_dom, parse_dom)
         return merged_dom
 
     @staticmethod

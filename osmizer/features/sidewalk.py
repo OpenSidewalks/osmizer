@@ -1,9 +1,9 @@
+from click import progressbar
 from lxml import etree
 
+from osmizer import schemas
 from osmizer.features.feature import Feature
 from osmizer.idgenerator import OSMIDGenerator
-from osmizer import schemas
-from click import progressbar
 
 
 class Sidewalk(Feature):

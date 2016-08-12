@@ -1,6 +1,7 @@
 from json import load as load_json
 
 import click
+
 from osmizer.features.crossing import Crossing
 from osmizer.features.curbramp import CurbRamp
 from osmizer.features.feature import Feature
@@ -65,7 +66,7 @@ def cli():
 @cli.command()
 @click.argument('json_type')
 @click.argument('file_in', type=click.Path(exists=True, readable=True,
-                allow_dash=True))
+                                           allow_dash=True))
 def validate(json_type, file_in):
     features = build_features(json_type, file_in)
 
@@ -87,9 +88,9 @@ def validate(json_type, file_in):
                      merged'))
 @click.argument('json_type')
 @click.argument('file_in', type=click.Path(exists=True, readable=True,
-                allow_dash=True))
+                                           allow_dash=True))
 @click.argument('file_out', type=click.Path(exists=False, writable=True,
-                allow_dash=True))
+                                            allow_dash=True))
 def convert(json_type, file_in, file_out, tolerance):
     features = build_features(json_type, file_in)
 
@@ -123,9 +124,9 @@ def convert(json_type, file_in, file_out, tolerance):
 
 @cli.command()
 @click.argument('files_in', type=click.Path(exists=True, readable=True,
-                allow_dash=True), nargs=-1)
+                                            allow_dash=True), nargs=-1)
 @click.argument('file_out', type=click.Path(exists=False, writable=True,
-                allow_dash=True), nargs=1)
+                                            allow_dash=True), nargs=1)
 def merge(files_in, file_out):
     xml_merged = Feature.merge(files_in)
     click.echo('...')

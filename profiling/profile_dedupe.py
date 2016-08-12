@@ -1,5 +1,6 @@
 import cProfile
 from json import load as load_json
+
 from osmizer.features.sidewalk import Sidewalk
 
 

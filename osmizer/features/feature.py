@@ -1,10 +1,9 @@
-from lxml import etree
-
 import copy
 from collections import OrderedDict
 
 import click
 import jsonschema
+from lxml import etree
 from rtree import index
 
 

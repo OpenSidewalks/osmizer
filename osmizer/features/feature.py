@@ -120,7 +120,6 @@ class Feature:
         # Sort out all nodes
         nodes_rtree = index.Index()
         nodes_dict = OrderedDict()
-        node_refs = xml_dom.findall('.//nd')
 
         for child in xml_dom.findall('.//node[@lon][@lat]'):
             child_id = int(child.attrib['id'])
@@ -132,13 +131,24 @@ class Feature:
             nodes_rtree.insert(child_id, coordinate, obj=coordinate)
             nodes_dict[child_id] = child
 
+        # Dictionary to store noderef (nd element) refs (node IDs) as keys,
+        # where values are a list of xml dom values that can be updated
+        # directly during deduping.
+        nds = xml_dom.findall('.//nd')
+        nd_map = {}
+        for nd in nds:
+            ndref = nd.attrib['ref']
+            if ndref in nd_map:
+                nd_map[ndref].append(nd)
+            else:
+                nd_map[ndref] = [nd]
+
         total = len(nodes_dict)
+        skip_count = 0
         with click.progressbar(length=total, label='Deduping') as bar:
             while nodes_dict:
                 previous = len(nodes_dict)
-
                 to_id, to_node = nodes_dict.popitem()
-
                 left = float(to_node.attrib['lon'])
                 right = left
                 bottom = float(to_node.attrib['lat'])
@@ -154,20 +164,33 @@ class Feature:
                                 top + tolerance_half)
 
                 hits = nodes_rtree.intersection(bounding_box, objects=True)
-                # from_ids = []
                 # TODO: calculate distance
                 for item in hits:
                     from_id = item.id
                     from_coords = item.object
-                    from_node = nodes_dict[from_id]
-                    Feature._substitute_ndids(node_refs, str(from_id), str(to_id))
+                    try:
+                        from_node = nodes_dict[from_id]
+                    except KeyError:
+                        # FIXME: Sometimes there is a KeyError, possibly due to
+                        # a race condition in rtree's index being deleted from
+                        # constantly. In this case, we should *skip* to the
+                        # next item.
+                        skip_count += 1
+                        continue
+                    # Update node reference in the appropriate nd elements
+                    for element in nd_map[str(from_id)]:
+                        element.attrib['ref'] = str(to_id)
+
                     # Remove the node from the DOM
                     from_node.getparent().remove(from_node)
                     # Remove the node from RTree
-                    nodes_rtree.delete(from_id, from_coords)
+                    nodes_rtree.delete(int(from_id), from_coords)
                     # Pop the node from Dictionary
                     nodes_dict.pop(from_id)
                 bar.update(previous - len(nodes_dict))
+        if skip_count:
+            click.echo('Skipped {} nodes due to potential race'
+                       'condition'.format(skip_count))
 
     @staticmethod
     def _substitute_ndids(node_refs, from_id, to_id):

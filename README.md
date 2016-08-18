@@ -20,21 +20,21 @@
 ```
 osmizer [OPTIONS] COMMAND [ARGS]...
 ```
-- Convert
-```
-osmizer convert sidewalks <input.json> <output.json>
-osmizer convert curbramps <input.json> <output.json>
-osmizer convert crossings <input.json> <output.json>
-```
 - Validate
 ```
 osmizer validate sidewalks <input.json>
 osmizer validate curbramps <input.json>
 osmizer validate crossings <input.json>
 ```
+- Convert
+```
+osmizer convert sidewalks <input.json> <output.json>
+osmizer convert curbramps <input.json> <output.json>
+osmizer convert crossings <input.json> <output.json>
+```
 - Merge
 ```
-osmizer merge <output1.json> <output2.json> <output_final.json>
+osmizer merge <output1.osm> <output2.osm> <output_final.osm>
 ```
 
 ## Options

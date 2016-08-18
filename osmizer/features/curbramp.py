@@ -13,7 +13,7 @@ class CurbRamp(Feature):
         :param curbramps_json: the curb ramps json object.
 
         '''
-        schema_json = schemas.load_schema('crossing')
+        schema_json = schemas.load_schema('curbramp')
         super().__init__(curbramps_json, schema_json)
 
     def convert(self):

@@ -20,21 +20,29 @@
 ```
 osmizer [OPTIONS] COMMAND [ARGS]...
 ```
-- Convert
-```
-osmizer convert sidewalks <input.geojson> <output.geojson>
-osmizer convert curbramps <input.geojson> <output.geojson>
-osmizer convert crossings <input.geojson> <output.geojson>
-```
 - Validate
 ```
 osmizer validate sidewalks <input.geojson>
+```
+```
 osmizer validate curbramps <input.geojson>
+```
+```
 osmizer validate crossings <input.geojson>
+```
+- Convert
+```
+osmizer convert sidewalks <input.json> <output.json>
+```
+```
+osmizer convert curbramps <input.json> <output.json>
+```
+```
+osmizer convert crossings <input.json> <output.json>
 ```
 - Merge
 ```
-osmizer merge <output1.geojson> <output2.geojson> <output_final.geojson>
+osmizer merge <output1.osm> <output2.osm> <output_final.osm>
 ```
 
 ## Options
@@ -49,6 +57,7 @@ osmizer merge <output1.geojson> <output2.geojson> <output_final.geojson>
 - Conversion
 ```
 python3 osmizer convert sidewalks example_data/sidewalk_sample.geojson out.osm
+```
 Converting Input File
 Converting  [####################################]  100%
 ...
@@ -61,12 +70,13 @@ OSM File Saved as out.osm
 ...
 Operation Finished
 ...
-```
+
 - Validation Only
 ```
 python3 osmizer validate sidewalks example_data/sidewalk_sample.geojson
+```
 Checked: Valid GeoJSON Input File
 ...
 Operation Finished
 ...
-```
+

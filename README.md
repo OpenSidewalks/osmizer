@@ -1,14 +1,14 @@
-[![Build Status](https://travis-ci.org/OpenSidewalks/DSSG2016-Sidewalks-ImportTool.svg?branch=master)](https://travis-ci.org/OpenSidewalks/DSSG2016-Sidewalks-ImportTool)
+[![Build Status](https://travis-ci.org/OpenSidewalks/osmizer.svg?branch=master)](https://travis-ci.org/OpenSidewalks/osmizer)
 
-# Data Import Tool for Global OpenSidewalks
+# osmizer: GeoJSON -> OSM Import Tool (Developed for Global OpenSidewalks)
 
-1. [What is Data Import Tool](#what-is-data-import-tool)
+1. [What is osmizer](#what-is-osmizer)
 1. [Features](#features)
 1. [Usage](#usage)
     - [Options](#options)
     - [Example Usage](#example-usage)
 
-## What is Data Import Tool
+## What is osmizer
 
 ## Features
 - Validate input JSON format before conversion
@@ -18,23 +18,23 @@
 
 ## Usage
 ```
-GeoJSON2OSM.py [OPTIONS] COMMAND [ARGS]...
+osmizer [OPTIONS] COMMAND [ARGS]...
 ```
 - Convert
 ```
-GeoJSONtoOSM.py convert sidewalks <input.json> <output.json>
-GeoJSONtoOSM.py convert curbramps <input.json> <output.json>
-GeoJSONtoOSM.py convert crossings <input.json> <output.json>
+osmizer convert sidewalks <input.geojson> <output.geojson>
+osmizer convert curbramps <input.geojson> <output.geojson>
+osmizer convert crossings <input.geojson> <output.geojson>
 ```
 - Validate
 ```
-GeoJSONtoOSM.py validate sidewalks <input.json>
-GeoJSONtoOSM.py validate curbramps <input.json>
-GeoJSONtoOSM.py validate crossings <input.json>
+osmizer validate sidewalks <input.geojson>
+osmizer validate curbramps <input.geojson>
+osmizer validate crossings <input.geojson>
 ```
 - Merge
 ```
-GeoJSONtoOSM.py merge <output1.json> <output2.json> <output_final.json>
+osmizer merge <output1.geojson> <output2.geojson> <output_final.geojson>
 ```
 
 ## Options
@@ -48,21 +48,23 @@ GeoJSONtoOSM.py merge <output1.json> <output2.json> <output_final.json>
 ## Example Usage
 - Conversion
 ```
-python GeoJSONtoOSM.py convert sidewalks GeoJSONSamples/AllMergeSample.json out.xml
-running with lxml.etree
-Input File Read Successfully
+python3 osmizer convert sidewalks example_data/sidewalk_sample.geojson out.osm
+Converting Input File
+Converting  [####################################]  100%
 ...
-Running Deduplicate(Tolerance: 0.0010)
+Deduping Output(Tolerance: 0.00000010)
+Sorting  [####################################]  100%
+Building Map  [####################################]  100%
+Deduping  [####################################]  100%
 ...
-OSM file saved: out.xml
+OSM File Saved as out.osm
 ...
 Operation Finished
 ...
 ```
 - Validation Only
 ```
-python GeoJSONtoOSM.py validate sidewalks GeoJSONSamples/AllMergeSample.json
-running with lxml.etree
+python3 osmizer validate sidewalks example_data/sidewalk_sample.geojson
 Checked: Valid GeoJSON Input File
 ...
 Operation Finished

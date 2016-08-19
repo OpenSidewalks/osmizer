@@ -14,7 +14,7 @@
 Osmizer is an Python based import tool which converts [OpenSidewalks](https://Opensidewalks.com) specified GeoJSON sidewalks data into OpenStreetMap XML format.
 
 ## Features
-- Validate input JSON format before conversion
+- Validate input GeoJSON format before conversion
 - Turns any Global OpenSidewalks standard schema into OSM standard format
 - Deduplicate same geometry points
 - Merge multiple layers into one
@@ -40,7 +40,7 @@ virtualenv env
 ## Launch the App
 After installation, there are two ways to launch the application in Python 3
 
-- From python 3 directly
+- From Python 3 directly
     ```
     python3 -m osmizer
     ```

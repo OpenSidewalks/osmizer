@@ -1,7 +1,7 @@
 import click
 from click.testing import CliRunner
-import osmizer.__main__ as osmizer
 
+import osmizer.__main__ as osmizer
 
 runner = CliRunner()
 
@@ -14,7 +14,7 @@ def test_invalid_option():
             pass
     except TypeError as e:
         assert 'No options defined but a name was passed (foo).' \
-            in str(e)
+               in str(e)
     else:
         assert False, 'Expected a type error because of an invalid option.'
 

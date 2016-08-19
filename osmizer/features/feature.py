@@ -1,39 +1,10 @@
 import copy
+from collections import OrderedDict
 
 import click
 import jsonschema
-
-# import lxml etree
-try:
-    from lxml import etree
-
-    print('running with lxml.etree')
-except ImportError:
-    try:
-        # Python 2.5
-        import xml.etree.cElementTree as etree
-
-        print('running with cElementTree on Python 2.5+')
-    except ImportError:
-        try:
-            # Python 2.5
-            import xml.etree.ElementTree as etree
-
-            print('running with ElementTree on Python 2.5+')
-        except ImportError:
-            try:
-                # normal cElementTree install
-                import cElementTree as etree
-
-                print('running with cElementTree')
-            except ImportError:
-                try:
-                    # normal ElementTree install
-                    import elementtree.ElementTree as etree
-
-                    print('running with ElementTree')
-                except ImportError:
-                    print('Failed to import ElementTree from any known place')
+from lxml import etree
+from rtree import index
 
 
 class Feature:
@@ -103,7 +74,7 @@ class Feature:
         :return: None
         '''
         osm_xml_dom_root.attrib['version'] = str(0.6)
-        osm_xml_dom_root.attrib['generator'] = 'OpenSidewalks Data Import Tool'
+        osm_xml_dom_root.attrib['generator'] = 'osmizer'
 
     @staticmethod
     def dedup(xml_dom, tolerance):
@@ -116,112 +87,107 @@ class Feature:
 
         '''
         # Sort out all nodes
-        nodes = []
-        for child in list(xml_dom):
-            if child.tag == 'node' and ('lon' and 'lat') in child.attrib:
-                nodes.append(child)
+        nodes_rtree = index.Index()
+        nodes_dict = OrderedDict()
 
-        # Group nodes when they are close
-        nodes_groups = []
-        grouped = False
-        for node in nodes:
-            grouped = False
-            for group in nodes_groups:
-                for group_member in group:
-                    if Feature.__can_group__(group_member, node, tolerance):
-                        group.append(node)
-                        grouped = True
-                        break
-                if grouped:
-                    break
-            if not grouped:
-                nodes_groups.append([node])
+        all_nodes = xml_dom.findall('.//node[@lon][@lat]')
+        with click.progressbar(length=len(all_nodes), label='Sorting') as bar:
+            for child in all_nodes:
+                child_id = int(child.attrib['id'])
+                left = float(child.attrib['lon'])
+                right = left
+                bottom = float(child.attrib['lat'])
+                top = bottom
+                coordinate = (left, bottom, right, top)
+                nodes_rtree.insert(child_id, coordinate, obj=coordinate)
+                nodes_dict[child_id] = child
+                bar.update(1)
+            bar.finish()
 
-        # Merge nodes
-        for group in nodes_groups:
-            if len(group) > 1:
-                for node in group:
-                    if node != group[0]:
-                        Feature.__substitute_nd_id__(xml_dom, group[0], node)
+        # Dictionary to store noderef (nd element) refs (node IDs) as keys,
+        # where values are a list of xml dom values that can be updated
+        # directly during deduping.
+        nds = xml_dom.findall('.//nd')
 
-        return xml_dom
+        # If there aren't any node refs (e.g. just point data), don't dedupe
+        if not nds:
+            return xml_dom
+
+        nd_map = {}
+        with click.progressbar(length=len(all_nodes), label='Building Map') as bar:
+            for nd in nds:
+                ndref = nd.attrib['ref']
+                if ndref in nd_map:
+                    nd_map[ndref].append(nd)
+                else:
+                    nd_map[ndref] = [nd]
+                bar.update(1)
+            bar.finish()
+
+        total = len(nodes_dict)
+        skip_count = 0
+        with click.progressbar(length=total, label='Deduping') as bar:
+            while nodes_dict:
+                previous = len(nodes_dict)
+                to_id, to_node = nodes_dict.popitem()
+                left = float(to_node.attrib['lon'])
+                right = left
+                bottom = float(to_node.attrib['lat'])
+                top = bottom
+
+                # Remove from RTree
+                nodes_rtree.delete(to_id, (left, bottom, right, top))
+
+                tolerance_half = tolerance / 2.0
+                bounding_box = (left - tolerance_half,
+                                bottom - tolerance_half,
+                                right + tolerance_half,
+                                top + tolerance_half)
+
+                hits = nodes_rtree.intersection(bounding_box, objects=True)
+                # TODO: calculate distance
+                for item in hits:
+                    from_id = item.id
+                    from_coords = item.object
+                    try:
+                        from_node = nodes_dict[from_id]
+                    except KeyError:
+                        # FIXME: Sometimes there is a KeyError, possibly due to
+                        # a race condition in rtree's index being deleted from
+                        # constantly. In this case, we should *skip* to the
+                        # next item.
+                        skip_count += 1
+                        continue
+                    # Update node reference in the appropriate nd elements
+                    for element in nd_map[str(from_id)]:
+                        element.attrib['ref'] = str(to_id)
+
+                    # Remove the node from the DOM
+                    from_node.getparent().remove(from_node)
+                    # Remove the node from RTree
+                    nodes_rtree.delete(int(from_id), from_coords)
+                    # Pop the node from Dictionary
+                    nodes_dict.pop(from_id)
+                bar.update(previous - len(nodes_dict))
+        if skip_count:
+            click.echo('Skipped {} nodes due to potential race'
+                       'condition'.format(skip_count))
+        bar.finish()
 
     @staticmethod
-    def __can_group__(node_1, node_2, tolerance) -> bool:
-        '''Decide if two nodes can be grouped(and be merged later).
+    def _substitute_ndids(node_refs, from_id, to_id):
+        '''Replaces all node refs with from_ids with to_id.
 
-        :param node_1: a node.
-        :param node_2: another node.
-        :param tolerance: how close (in degree) should the algorithm consider
-                          one node is a duplicate of another.
-        :return: a boolean indicates if two nodes can be grouped.
-        '''
-        # FIXME: shouldn't use special methods
-        node_1_lon = node_1.attrib['lon']
-        node_1_lat = node_1.attrib['lat']
-        node_2_lon = node_1.attrib['lon']
-        node_2_lat = node_2.attrib['lat']
-
-        lon_diff = Feature.__distance__(node_1_lon, node_2_lon)
-        lat_diff = Feature.__distance__(node_1_lat, node_2_lat)
-        if lon_diff <= tolerance and lat_diff <= tolerance:
-            return True
-        else:
-            return False
-
-    @staticmethod
-    def __distance__(num1, num2) -> float:
-        '''Calculate distance of two numbers.
-
-        :param num1: a number, do not necessarily have to be a number type.
-        :param num2: another number, do not necessarily have to be a number
-                     type.
-        :return: a float of their distance.
-
-        '''
-        return abs(float(num1) - float(num2))
-
-    @staticmethod
-    def __substitute_nd_id__(xml_dom, representative_node, substitute_node):
-        '''Search through a DOM tree and merge a node.
-
-        :param xml_dom: the DOM tree.
-        :param representative_node: the node that substitute_node is to be
-                                    merged to.
-        :param substitute_node: the node to be merged to representative_node.
+        :param node_refs: A list of node reference elments (previously
+                          generated).
+        :param from_id: The ID of the node to be merged to representative_id.
+        :param to_id: The ID of the node that substitute_id is to be merged to.
         :return:
 
         '''
-        representative_id = representative_node.attrib['id']
-        substitute_id = substitute_node.attrib['id']
-        Feature.__recursive_substitute_nd_id__(xml_dom, representative_id,
-                                               substitute_id)
-        substitute_node.getparent().remove(substitute_node)
-
-    @staticmethod
-    def __recursive_substitute_nd_id__(dom_member, representative_id,
-                                       substitute_id):
-        '''Recursive function which search through a DOM member and substitute
-        the id.
-
-        :param dom_member: a member of the DOM tree.
-        :param representative_id: the id of the node that substitute_id is to
-                                  be merged to.
-        :param substitute_id: the id of the node to be merged to
-                              representative_id.
-        :return:
-
-        '''
-        if dom_member.tag == 'nd' and \
-           dom_member.attrib['ref'] == substitute_id:
-            dom_member.attrib['ref'] = representative_id
-
-        if len(dom_member.getchildren()) == 0:
-            return
-
-        for child in dom_member.getchildren():
-            Feature.__recursive_substitute_nd_id__(child, representative_id,
-                                                   substitute_id)
+        for element in node_refs:
+            if element.attrib['ref'] == from_id:
+                element.set('ref', to_id)
 
     @staticmethod
     def merge(files_in):
@@ -235,20 +201,15 @@ class Feature:
         if len(files_in) < 1:
             click.echo('ERROR: No file input')
             return None
-        first_load = True
-        merged_dom = None
-        parse_dom = None
-        for file in files_in:
-            parse_dom = Feature.__parse_xml_file__(file)
+
+        merged_dom = Feature.__parse_xml_file__(files_in[0])
+        for file_in in files_in[1:]:
+            parse_dom = Feature.__parse_xml_file__(file_in)
 
             if parse_dom is None:
                 return None
 
-            if first_load:
-                first_load = False
-                merged_dom = parse_dom
-            else:
-                Feature.__merge_doms__(merged_dom, parse_dom)
+            Feature.__merge_doms__(merged_dom, parse_dom)
         return merged_dom
 
     @staticmethod
@@ -297,7 +258,7 @@ class Feature:
 
         if root_attribs['version'] != '0.6':
             return False
-        if root_attribs['generator'] != 'OpenSidewalks Data Import Tool':
+        if root_attribs['generator'] != 'osmizer':
             return False
 
         return True

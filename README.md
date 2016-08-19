@@ -77,7 +77,7 @@ osmizer validate crossings <input.geojson>
 ```
 - Merge
 ```
-osmizer merge <output1.geojson> <output2.geojson> <output_final.geojson>
+osmizer merge <output1.osm> <output2.osm> <output_final.osm>
 ```
 
 ## Options

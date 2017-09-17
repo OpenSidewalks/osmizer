@@ -57,13 +57,13 @@ osmizer [OPTIONS] COMMAND [ARGS]...
 ```
 - Convert
 ```
-osmizer convert sidewalks <input.geojson> <output.geojson>
+osmizer convert sidewalks <input.geojson> <output.osm>
 ```
 ```
-osmizer convert curbramps <input.geojson> <output.geojson>
+osmizer convert curbramps <input.geojson> <output.osm>
 ```
 ```
-osmizer convert crossings <input.geojson> <output.geojson>
+osmizer convert crossings <input.geojson> <output.osm>
 ```
 - Validate
 ```
